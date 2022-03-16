@@ -1,0 +1,36 @@
+{
+  "name": "vibin",
+  "version": "1.0.0",
+  "description": "Discord Music Bot",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "run": "node ."
+  },
+  "author": "Brandon Doornbos",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "@discordjs/opus": "^0.7.0",
+    "@discordjs/voice": "^0.8.0",
+    "discord.js": "^13.6.0",
+    "sodium": "^3.0.2",
+    "ytdl-core": "^4.11.0",
+    "ytpl": "^2.3.0",
+    "ytsr": "^3.6.0"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brandon-doornbos/vibin.git"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "music",
+    "youtube"
+  ],
+  "bugs": {
+    "url": "https://github.com/brandon-doornbos/vibin/issues"
+  },
+  "homepage": "https://github.com/brandon-doornbos/vibin#readme"
+}

@@ -4,7 +4,6 @@ import {
     createAudioResource,
     demuxProbe,
 } from '@discordjs/voice';
-// import ytdl from 'ytdl-core';
 
 export class Track {
     constructor(url, title, length) {
@@ -60,10 +59,7 @@ export class Track {
                 '-r', '100K',
                 '--no-cache-dir',
                 this.url
-            ], {
-                detached: true,
-                stdio: [0, 'pipe', 0]
-            });
+            ], { stdio: [0, 'pipe', 0] });
 
             if (!process.stdout) {
                 reject(new Error('No stdout'));

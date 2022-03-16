@@ -1,23 +1,31 @@
-import { Client, GuildMember, MessageEmbed, Intents } from "discord.js";
+import {
+    Client,
+    GuildMember,
+    MessageEmbed,
+    Intents,
+    Snowflake,
+    Message
+} from "discord.js";
+
 import {
     AudioPlayerStatus,
     joinVoiceChannel,
-    VoiceConnectionStatus,
-    entersState
 } from "@discordjs/voice";
+
 import { GuildConnection } from "./connection.js";
-import { Track } from './track.js';
-import { shuffle, stringToIndex, secondsToHms } from "./utils.js";
-import ytdl from 'ytdl-core';
-import ytpl from 'ytpl';
-import ytsr from 'ytsr';
+import { shuffle, string_to_index, seconds_to_hms } from "./utils.js";
 
 // https://discord.js.org/#/docs/main/stable/class/ClientUser?scrollTo=setActivity
 
+enum MessageType {
 
+}
 
 export class Bot {
-    constructor(token) {
+    connections: Map<Snowflake, GuildConnection>;
+    client: Client;
+
+    constructor(token: string) {
         this.connections = new Map();
 
         this.client = new Client({
@@ -25,26 +33,26 @@ export class Bot {
                 Intents.FLAGS.GUILD_VOICE_STATES,
                 Intents.FLAGS.GUILD_MESSAGES,
                 Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-                Intents.FLAGS.GUILDS
+                Intents.FLAGS.GUILDS,
             ]
         });
 
-        this.client.on("ready", this.ready);
-        this.client.on("error", this.error);
-        this.client.on("messageCreate", async (message) => this.message_create(message));
+        this.client.once("ready", this.on_ready);
+        this.client.on("error", this.on_error);
+        this.client.on("messageCreate", this.on_message_create);
 
         this.client.login(token);
     }
 
-    ready() {
-        console.log("ready!");
+    on_ready(client: Client) {
+        console.log(`${client.user.tag} ready!`);
     }
 
-    error(err) {
-        console.warn(err);
+    on_error(error: Error) {
+        console.warn(error);
     }
 
-    async message_create(message) {
+    async on_message_create(message: Message) {
         if (!message.guild || message.member?.id === this.client.user?.id || message.member?.bot) return;
 
         // FIXME: make a server connection on any message, but only make a voiceconnection when requested
@@ -86,7 +94,7 @@ export class Bot {
         switch (command) {
             // FIXME: add seek
             case "p": case "play":
-                void this.play(message, server_connection);
+                void server_connection.play(message);
                 break;
             case "s": case "skip":
                 if (server_connection && server_connection.audioPlayer.state.status !== AudioPlayerStatus.Idle) {
@@ -124,8 +132,8 @@ export class Bot {
                     if (server_connection.audioPlayer.state.status !== AudioPlayerStatus.Idle) {
                         const nowPlaying = server_connection.audioPlayer.state.resource.metadata.title;
 
-                        const currentTime = secondsToHms(Math.floor(server_connection.audioPlayer.state.resource.playbackDuration / 1000));
-                        const totalTime = secondsToHms(server_connection.audioPlayer.state.resource.metadata.length);
+                        const currentTime = seconds_to_hms(Math.floor(server_connection.audioPlayer.state.resource.playbackDuration / 1000));
+                        const totalTime = seconds_to_hms(server_connection.audioPlayer.state.resource.metadata.length);
 
                         embed.setDescription(`*${nowPlaying}* - ${currentTime} / ${totalTime}`);
                     } else {
@@ -135,7 +143,7 @@ export class Bot {
                     if (server_connection.queue.length > 0) {
                         const tracksPerPage = 10;
                         const pages = Math.ceil(server_connection.queue.length / 10).toFixed(0);
-                        let page = stringToIndex(message.content.split(" ")[1], pages);
+                        let page = string_to_index(message.content.split(" ")[1], pages);
 
                         if (page >= pages)
                             page = pages - 1;
@@ -146,7 +154,7 @@ export class Bot {
 
                         for (let i = page * tracksPerPage; i < Math.min(server_connection.queue.length, (page + 1) * tracksPerPage); ++i) {
                             const track = server_connection.queue[i];
-                            queue += `**${(i + 1)}** - *${track.title}* - ${secondsToHms(track.length)}\n`;
+                            queue += `**${(i + 1)}** - *${track.title}* - ${seconds_to_hms(track.length)}\n`;
                         }
 
                         embed.addField("Queue", queue);
@@ -204,7 +212,7 @@ export class Bot {
                 break;
             case "r": case "remove":
                 if (server_connection) {
-                    const index = stringToIndex(message.content.split(" ")[1], server_connection.queue.length);
+                    const index = string_to_index(message.content.split(" ")[1], server_connection.queue.length);
 
                     let embed = new MessageEmbed();
 
@@ -228,8 +236,8 @@ export class Bot {
                     let embed = new MessageEmbed();
 
                     const parts = message.content.split(" ");
-                    const source = stringToIndex(parts[1], server_connection.queue.length);
-                    const target = stringToIndex(parts[2], server_connection.queue.length);
+                    const source = string_to_index(parts[1], server_connection.queue.length);
+                    const target = string_to_index(parts[2], server_connection.queue.length);
 
                     if (
                         (source !== target)
@@ -296,7 +304,7 @@ export class Bot {
             case "l": case "leave": case "die":
                 if (server_connection) {
                     server_connection.voiceConnection.destroy();
-                    this.activeConnections.delete(message.guild.id);
+                    this.connections.delete(message.guild.id);
 
                     const embed = new MessageEmbed()
                         .setColor("#FF0000")
@@ -338,76 +346,8 @@ export class Bot {
         }
     }
 
-    async play(message, server_connection) {
-        const url = message.content.slice(message.content.indexOf(" ") + 1);
+    parse_message() {
 
-        if (message.member.voice.channelId !== server_connection.voiceChannel) {
-            await message.reply("Join the correct voice channel and then try that again!");
-            console.log("plz join correct channel");
-            return;
-        }
-
-        try {
-            await entersState(server_connection.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
-        } catch (error) {
-            console.warn(error);
-            await message.reply("Failed to join voice channel within 20 seconds, please try again later!");
-            return;
-        }
-
-        try {
-            if (ytpl.validateID(url)) {
-                const playlist = await ytpl(url, { limit: Infinity });
-                let duration = 0;
-                for (let item of playlist.items) {
-                    const track = new Track(item.shortUrl, item.title, item.durationSec);
-                    server_connection.enqueue(track);
-                    duration += item.durationSec;
-                }
-
-                const embed = new MessageEmbed()
-                    .setColor("#00FF00")
-                    .setThumbnail(playlist.thumbnails[0].url)
-                    .addField("Added playlist", `[${playlist.title}](${playlist.url})`)
-                    .addField("Length", secondsToHms(duration), true)
-                    .addField("Tracks", playlist.items.length.toString(), true);
-
-                message.reply({ embeds: [embed] });
-            } else if (ytdl.validateURL(url)) {
-                const info = await ytdl.getInfo(url);
-                const video = info.videoDetails;
-                const track = new Track(url, video.title, video.lengthSeconds);
-                server_connection.enqueue(track);
-
-                const embed = new MessageEmbed()
-                    .setColor("#00FF00")
-                    .setThumbnail(video.thumbnails[0].url)
-                    .addField("Added track", `[${track.title}](${url})`)
-                    .addField("Length", secondsToHms(video.lengthSeconds))
-
-                message.reply({ embeds: [embed] });
-            } else {
-                const filters = await ytsr.getFilters(url);
-                const filter = filters.get("Type").get("Video");
-                const results = await ytsr(filter.url, { limit: 1 });
-                const firstResult = results.items[0];
-                const info = await ytdl.getInfo(firstResult.url);
-                const video = info.videoDetails;
-                const track = new Track(firstResult.url, firstResult.title, video.lengthSeconds);
-                server_connection.enqueue(track);
-
-                const embed = new MessageEmbed()
-                    .setColor("#00FF00")
-                    .setThumbnail(video.thumbnails[0].url)
-                    .addField("Added track", `[${track.title}](${firstResult.url})`)
-                    .addField("Length", secondsToHms(video.lengthSeconds));
-
-                message.reply({ embeds: [embed] });
-            }
-        } catch (error) {
-            console.warn(error);
-            server_connection.text_channel.send("Failed to play track, please try again later!");
-        }
     }
 
     static async not_playing(message) {

@@ -21,16 +21,6 @@ export function shuffle(array: Array<any>) {
     }
 }
 
-export function string_to_index(s: string, queue_len: number) {
-    let num = undefined;
-    if (s === "last") {
-        num = queue_len - 1;
-    } else {
-        num = parseInt(s) - 1;
-    }
-    return num;
-}
-
 export function seconds_to_hms(d: number) {
     const h = Math.floor(d / 3600);
     const m = Math.floor(d % 3600 / 60);
@@ -41,4 +31,14 @@ export function seconds_to_hms(d: number) {
     const sDisplay = s > 0 ? (s < 10 ? "0" : "") + s : "00";
 
     return hDisplay + mDisplay + sDisplay;
+}
+
+export function string_to_index(s: string, queue_len: number) {
+    let num = undefined;
+    if (s === "last") {
+        num = queue_len - 1;
+    } else {
+        num = parseInt(s) - 1;
+    }
+    return num;
 }

@@ -1,4 +1,4 @@
-function random(low: number = undefined, high: number = undefined) {
+function random(low: number = 0, high: number = 0) {
     if (high) {
         return Math.random() * (high - low) + low;
     } else if (low) {
@@ -8,7 +8,7 @@ function random(low: number = undefined, high: number = undefined) {
     }
 }
 
-function random_int(low: number = undefined, high: number = undefined) {
+function random_int(low: number = 0, high: number = 0) {
     return Math.floor(random(low, high));
 }
 

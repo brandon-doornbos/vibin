@@ -1,11 +1,11 @@
 {
   "name": "vibin",
   "version": "1.0.0",
-  "description": "Discord Music Bot",
-  "main": "src/index.js",
+  "description": "Discord music bot",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "run": "node ."
+    "start": "npx tsc && node ."
   },
   "author": "Brandon Doornbos",
   "license": "GPL-3.0",
@@ -18,7 +18,9 @@
     "ytpl": "^2.3.0",
     "ytsr": "^3.6.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "typescript": "^4.6.2"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/brandon-doornbos/vibin.git"

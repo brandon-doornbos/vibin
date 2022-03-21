@@ -49,11 +49,20 @@ export class Bot {
             ]
         });
 
-        this.client.once("ready", (client) => console.log(`${client.user?.tag} ready!`));
+        this.client.once("ready", (client) => this.on_ready(client));
         this.client.on("error", (error) => console.warn(error));
         this.client.on("messageCreate", (message) => this.on_message_create(message));
 
         this.client.login(token);
+    }
+
+    on_ready(client: Discord.Client) {
+        const user = client.user;
+        if (!user)
+            return;
+
+        console.log(`${user.tag} ready!`);
+        user.setPresence({ activities: [{ type: "LISTENING", name: `@${user.username} help` }] });
     }
 
     private build_command_cache(): Map<string, Command> {
@@ -84,12 +93,20 @@ export class Bot {
             this.connections.set(message.guildId, connection);
         }
 
-        const prefix = message.content.slice(0, connection.prefix.length);
-        if (prefix !== connection.prefix)
-            return;
+        let content = "";
+        if (
+            message.content.startsWith(`<@${this.client.user?.id}>`)
+            || message.content.startsWith(`<@!${this.client.user?.id}>`)
+        ) {
+            content = message.content.split('>').slice(1).join('>');
+            if (content[0] === ' ') content = content.slice(1);
+        } else {
+            if (message.content.slice(0, connection.prefix.length) !== connection.prefix)
+                return;
+            content = message.content.slice(connection.prefix.length);
+        }
 
-        const rest = message.content.slice(connection.prefix.length);
-        const parsed_message = this.parse_message(rest);
+        const parsed_message = this.parse_message(content);
         const command = Command[parsed_message.command].toLowerCase();
         // @ts-ignore
         let embed = await connection[`command_${command}`](message, parsed_message.args);

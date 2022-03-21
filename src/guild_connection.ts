@@ -77,7 +77,7 @@ export class GuildConnection {
                 **resume** - Resume paused music playback
                 **shuffle** - Shuffle the queue
             `)
-            .setFooter({ text: `The current prefix is ${this.prefix}` });
+            .setFooter({ text: `Use ${this.prefix} with a command or @ me` });
     }
 
     async command_leave(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {

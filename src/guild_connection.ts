@@ -121,8 +121,13 @@ export class GuildConnection {
 
     async command_play(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
         const voice_channel = message.member?.voice.channel;
-        if (voice_channel && voice_channel instanceof Discord.VoiceChannel)
+        if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
             this.request_voice_connection(voice_channel);
+        } else {
+            return new Discord.MessageEmbed()
+                .setColor("#FF0000")
+                .setDescription("Please join a voice channel.");
+        }
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))

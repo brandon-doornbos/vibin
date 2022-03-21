@@ -235,23 +235,21 @@ export class AudioConnection {
                     duration += item.durationSec || 0;
                 }
 
-                embed
-                    .setColor("#00FF00")
-                    .setThumbnail(playlist.thumbnails[0].url || "")
-                    .addField("Added playlist", `[${playlist.title}](${playlist.url})`)
-                    .addField("Length", seconds_to_hms(duration), true)
-                    .addField("Tracks", playlist.items.length.toString(), true);
+                embed.setColor("#00FF00");
+                embed.setThumbnail(playlist.thumbnails[0].url || "");
+                embed.addField("Added playlist", `[${playlist.title}](${playlist.url})`);
+                embed.addField("Length", seconds_to_hms(duration), true);
+                embed.addField("Tracks", playlist.items.length.toString(), true);
             } else if (YTDL.validateURL(url)) {
                 const info = await YTDL.getInfo(url);
                 const video = info.videoDetails;
                 const track = new Track(url, video.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed
-                    .setColor("#00FF00")
-                    .setThumbnail(video.thumbnails[0].url)
-                    .addField("Added track", `[${track.title}](${url})`)
-                    .addField("Length", seconds_to_hms(track.length))
+                embed.setColor("#00FF00");
+                embed.setThumbnail(video.thumbnails[0].url);
+                embed.addField("Added track", `[${track.title}](${url})`);
+                embed.addField("Length", seconds_to_hms(track.length));
             } else {
                 const filters = await YTSR.getFilters(url);
                 const filter = filters.get("Type")?.get("Video");
@@ -264,11 +262,10 @@ export class AudioConnection {
                 const track = new Track(firstResult.url, firstResult.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed
-                    .setColor("#00FF00")
-                    .setThumbnail(video.thumbnails[0].url)
-                    .addField("Added track", `[${track.title}](${firstResult.url})`)
-                    .addField("Length", seconds_to_hms(track.length));
+                embed.setColor("#00FF00");
+                embed.setThumbnail(video.thumbnails[0].url);
+                embed.addField("Added track", `[${track.title}](${firstResult.url})`);
+                embed.addField("Length", seconds_to_hms(track.length));
             }
         } catch (error) {
             console.warn(error);

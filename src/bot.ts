@@ -5,6 +5,7 @@ enum Command {
     // FIXME: Bind,
     Clear,
     Help,
+    // FIXME: Join
     Leave,
     Move,
     Pause,
@@ -22,7 +23,7 @@ enum Command {
 export class Bot {
     private connections: Map<Discord.Snowflake, GuildConnection>;
     client: Discord.Client;
-    // private message_type_cache: Map<MessageType, string[]>;
+    private command_cache: Map<string, Command>;
 
     static instance: Bot;
 
@@ -36,11 +37,8 @@ export class Bot {
 
     private constructor(token: string) {
         this.connections = new Map();
-        // this.message_type_cache = new Map();
-        // for (let key of Object.keys(MessageType).filter(x => !(parseInt(x) >= 0)).map((x) => x.toLowerCase())) {
-
-        //     console.log(key);
-        // }
+        this.command_cache = this.build_command_cache();
+        this.command_cache.set("p", Command.Play);
 
         this.client = new Discord.Client({
             intents: [
@@ -51,19 +49,29 @@ export class Bot {
             ]
         });
 
-        this.client.once("ready", this.on_ready);
-        this.client.on("error", this.on_error);
+        this.client.once("ready", (client) => console.log(`${client.user?.tag} ready!`));
+        this.client.on("error", (error) => console.warn(error));
         this.client.on("messageCreate", (message) => this.on_message_create(message));
 
         this.client.login(token);
     }
 
-    on_ready(client: Discord.Client) {
-        console.log(`${client.user?.tag} ready!`);
-    }
+    private build_command_cache(): Map<string, Command> {
+        let cache = new Map();
 
-    on_error(error: Error) {
-        console.warn(error);
+        for (let command in Command) {
+            if (parseInt(command) >= 0 || command === "Unknown")
+                continue;
+
+            let entry = "";
+            for (let letter of command.toLowerCase()) {
+                entry += letter;
+                if (!cache.get(entry))
+                    cache.set(entry, Command[command]);
+            }
+        }
+
+        return cache;
     }
 
     async on_message_create(message: Discord.Message) {
@@ -80,68 +88,37 @@ export class Bot {
         if (prefix !== connection.prefix)
             return;
 
-        let parsed_message = this.parse_message(message);
+        const rest = message.content.slice(connection.prefix.length);
+        const parsed_message = this.parse_message(rest);
+        const command = Command[parsed_message.command].toLowerCase();
         // @ts-ignore
-        connection[`command_${Command[parsed_message.command].toLowerCase()}`](parsed_message.args);
-
-        if (!message.guild || message.member?.id === this.client.user?.id || message.member?.user.bot) return;
-
-        // FIXME: these checks were removed, see if they are necessary
-        // let server_connection = this.connections.get(message.guild.id);
-        // if (server_connection && server_connection.destroyed) {
-        //     this.connections.delete(message.guild.id);
-        //     server_connection = undefined;
-        // }
-
-        // if (!server_connection && message.member instanceof Discord.GuildMember) {
-        //     if (
-        //         message.member.voice.channel
-        //         && message.member.voice.channel instanceof Discord.VoiceChannel
-        //         && message.channel instanceof Discord.TextChannel
-        //     ) {
-        //         const voiceChannel = message.member.voice.channel;
-        //         server_connection = new GuildConnection(message.channel, voiceChannel,
-        //             DiscordVoice.joinVoiceChannel({
-        //                 channelId: voiceChannel.id,
-        //                 guildId: voiceChannel.guild.id,
-        //                 adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        //                 selfDeaf: true,
-        //             }), this.client
-        //         );
-        //         server_connection.voice.connection.on("error", console.warn);
-        //         this.connections.set(message.guild?.id, server_connection);
-        //     } else {
-        //         message.reply("Please join a voice channel.");
-        //         return;
-        //     }
-        // }
-
-        // if (!server_connection) {
-        //     message.reply("wtf");
-        //     return;
-        // }
-
-        // FIXME: check this for voice required commands etc., maybe define it in a struct for each command
-        // if (message.member?.voice.channel !== this.audio.channel) {
-        //     await message.reply("Join the correct voice channel and then try that again!");
-        //     console.log("plz join correct channel");
-        //     return;
-        // }
+        let embed = await connection[`command_${command}`](message, parsed_message.args);
+        if (!embed.description && embed.fields.length <= 0) {
+            embed.setColor("#FF0000");
+            embed.setDescription("Not currently playing.");
+        }
+        const result = await message.reply({ embeds: [embed] });
+        // @ts-ignore
+        if (connection[`command_${command}_callback`]) {
+            // @ts-ignore
+            connection[`command_${command}_callback`](result);
+        }
     }
 
-    parse_message(message: Discord.Message): { command: Command, args: string[] } {
-        // FIXME: actually parse command and args
-        // message.content.slice(connection.prefix.length).split(" ")[0]
+    parse_message(content: string): { command: Command, args: string[] } {
+        const unknown = { command: Command.Unknown, args: [] };
 
-        return { command: Command.Unknown, args: [] };
-    }
+        let args = content.split(' ');
 
-    static async not_playing(message: Discord.Message) {
-        const embed = new Discord.MessageEmbed()
-            .setColor("#FF0000")
-            .addField("Not currently playing", "🤷🏻");
+        let first_arg = args.shift();
+        if (!first_arg)
+            return unknown;
 
-        message.reply({ embeds: [embed] });
+        let command = this.command_cache.get(first_arg);
+        if (command === undefined)
+            return unknown;
+
+        return { command, args };
     }
 }
 

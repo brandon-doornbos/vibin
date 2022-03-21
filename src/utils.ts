@@ -12,15 +12,6 @@ function random_int(low: number = 0, high: number = 0) {
     return Math.floor(random(low, high));
 }
 
-export function shuffle(array: Array<any>) {
-    for (let i = array.length - 1; i >= 0; i--) {
-        const j = random_int(i + 1);
-        const temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-}
-
 export function seconds_to_hms(d: number) {
     const h = Math.floor(d / 3600);
     const m = Math.floor(d % 3600 / 60);
@@ -31,6 +22,15 @@ export function seconds_to_hms(d: number) {
     const sDisplay = s > 0 ? (s < 10 ? "0" : "") + s : "00";
 
     return hDisplay + mDisplay + sDisplay;
+}
+
+export function shuffle(array: any[]) {
+    for (let i = array.length - 1; i >= 0; i--) {
+        const j = random_int(i + 1);
+        const temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
 }
 
 export function string_to_index(s: string, queue_len: number) {

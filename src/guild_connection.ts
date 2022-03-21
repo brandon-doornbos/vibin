@@ -144,10 +144,9 @@ export class GuildConnection {
     async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
         this.update_prefix(args[0]);
 
-        let embed = new Discord.MessageEmbed();
-        embed.setColor("#00FF00")
-        embed.setDescription(`Prefix changed to: ${this.prefix}`);
-        return embed;
+        return new Discord.MessageEmbed()
+            .setColor("#00FF00")
+            .setDescription(`Prefix changed to: ${this.prefix}`);
     }
 
     async command_queue(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
@@ -279,9 +278,8 @@ export class GuildConnection {
     }
 
     async command_unknown(_message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
-        let embed = new Discord.MessageEmbed();
-        embed.setColor("#FF0000")
-        embed.setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`);
-        return embed;
+        return new Discord.MessageEmbed()
+            .setColor("#FF0000")
+            .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`);
     }
 }

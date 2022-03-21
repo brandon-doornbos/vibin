@@ -28,9 +28,8 @@ export class Bot {
     static instance: Bot;
 
     static the(): Bot {
-        if (!Bot.instance) {
+        if (!Bot.instance)
             Bot.instance = new Bot(process.argv[2]);
-        }
 
         return Bot.instance;
     }
@@ -116,10 +115,9 @@ export class Bot {
         }
         const result = await message.reply({ embeds: [embed] });
         // @ts-ignore
-        if (connection[`command_${command}_callback`]) {
-            // @ts-ignore
-            connection[`command_${command}_callback`](result);
-        }
+        const callback = connection[`command_${command}_callback`];
+        if (callback)
+            callback(result);
     }
 
     parse_message(content: string): { command: Command, args: string[] } {

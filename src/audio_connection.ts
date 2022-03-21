@@ -176,10 +176,9 @@ export class AudioConnection {
     }
 
     wrong_voice_channel() {
-        let embed = new Discord.MessageEmbed();
-        embed.setColor("#FF0000");
-        embed.setDescription("Please join the corrent voice channel.");
-        return embed;
+        return new Discord.MessageEmbed()
+            .setColor("#FF0000")
+            .setDescription("Please join the corrent voice channel.");
     }
 
     move(source: string, target: string) {
@@ -269,10 +268,9 @@ export class AudioConnection {
             }
         } catch (error) {
             console.warn(error);
-            let embed = new Discord.MessageEmbed();
-            embed.setColor("#FF0000");
-            embed.setDescription("Failed to play track.");
-            this.text_channel.send({ embeds: [embed] });
+            return new Discord.MessageEmbed()
+                .setColor("#FF0000")
+                .setDescription("Failed to play track.");
         }
 
         return embed;
@@ -383,10 +381,9 @@ export class AudioConnection {
     clear_queue() {
         this.queue = [];
 
-        let embed = new Discord.MessageEmbed();
-        embed.setColor("#0099FF");
-        embed.setDescription("Cleared queue");
-        return embed;
+        return new Discord.MessageEmbed()
+            .setColor("#0099FF")
+            .setDescription("Cleared queue");
     }
 
     stop() {

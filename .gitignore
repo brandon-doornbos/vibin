@@ -3,5 +3,3 @@ node_modules
 src/config.json
 prefixes
 dist
-run.sh
-start.sh

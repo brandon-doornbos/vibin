@@ -1,5 +1,6 @@
 import * as Discord from "discord.js";
 import { GuildConnection } from "./guild_connection.js";
+import tokens from "./config.json" assert { type: "json" };
 
 enum Command {
     // FIXME: Bind,
@@ -29,7 +30,7 @@ export class Bot {
 
     static the(): Bot {
         if (!Bot.instance)
-            Bot.instance = new Bot(process.argv[2]);
+            Bot.instance = new Bot(process.argv[2] || tokens.vibin);
 
         return Bot.instance;
     }

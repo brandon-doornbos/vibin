@@ -133,7 +133,7 @@ export class GuildConnection {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
 
-            const result = await this.audio_connection.play(args[0]);
+            const result = await this.audio_connection.play(args.join(' '));
             if (result)
                 return result;
         }

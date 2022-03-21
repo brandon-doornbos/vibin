@@ -13,7 +13,7 @@ const wait = Util.promisify(setTimeout);
 export class AudioConnection {
     private text_channel: Discord.TextChannel;
 
-    private voice_channel: Discord.VoiceChannel;
+    private voice_channel: Discord.Snowflake;
     voice_connection: DiscordVoice.VoiceConnection;
 
     private audio_player: DiscordVoice.AudioPlayer;
@@ -30,11 +30,11 @@ export class AudioConnection {
     constructor(voice_channel: Discord.VoiceChannel, text_channel: Discord.TextChannel) {
         this.text_channel = text_channel;
 
-        this.voice_channel = voice_channel;
+        this.voice_channel = voice_channel.id;
         this.voice_connection = DiscordVoice.joinVoiceChannel({
-            channelId: this.voice_channel.id,
-            guildId: this.voice_channel.guild.id,
-            adapterCreator: this.voice_channel.guild.voiceAdapterCreator,
+            channelId: voice_channel.id,
+            guildId: voice_channel.guild.id,
+            adapterCreator: voice_channel.guild.voiceAdapterCreator,
             selfDeaf: true
         });
 
@@ -79,6 +79,8 @@ export class AudioConnection {
                 try {
                     await DiscordVoice.entersState(this.voice_connection, DiscordVoice.VoiceConnectionStatus.Connecting, 5_000);
                     // Probably moved voice channel
+                    if (this.voice_connection.joinConfig.channelId)
+                        this.voice_channel = this.voice_connection.joinConfig.channelId;
                 } catch {
                     this.voice_connection.destroy();
                     this.text_channel.send("y u kick :(");
@@ -170,7 +172,7 @@ export class AudioConnection {
     }
 
     check_voice_channel(message: Discord.Message) {
-        return message.member?.voice.channel === this.voice_channel;
+        return message.member?.voice.channelId === this.voice_channel;
     }
 
     wrong_voice_channel() {

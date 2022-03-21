@@ -11,7 +11,7 @@ import { shuffle, seconds_to_hms, string_to_index } from "./utils.js";
 const wait = Util.promisify(setTimeout);
 
 export class AudioConnection {
-    private text_channel: Discord.TextChannel;
+    text_channel: Discord.TextChannel;
 
     private voice_channel: Discord.Snowflake;
     voice_connection: DiscordVoice.VoiceConnection;

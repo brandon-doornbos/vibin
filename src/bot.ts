@@ -106,6 +106,8 @@ export class Bot {
             content = message.content.slice(connection.prefix.length);
         }
 
+        connection.update_text_channel(message.channel);
+
         const parsed_message = this.parse_message(content);
         const command = Command[parsed_message.command].toLowerCase();
         // @ts-ignore

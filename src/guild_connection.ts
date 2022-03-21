@@ -35,6 +35,12 @@ export class GuildConnection {
         FS.writeFileSync(`prefixes/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, this.prefix);
     }
 
+    update_text_channel(channel: Discord.TextChannel) {
+        this.text_channel = channel;
+        if (this.audio_connection)
+            this.audio_connection.text_channel = channel;
+    }
+
     async request_voice_connection(voice_channel: Discord.VoiceChannel) {
         if (this.audio_connection && !this.audio_connection.destroyed) {
             DiscordVoice.entersState(this.audio_connection.voice_connection, DiscordVoice.VoiceConnectionStatus.Ready, 20e3)

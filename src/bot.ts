@@ -119,9 +119,10 @@ export class Bot {
         }
         const result = await message.reply({ embeds: [embed] });
         // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
-        const callback = connection[`command_${command}_callback`];
-        if (callback)
-            callback(result);
+        if (connection[`command_${command}_callback`]) {
+            // @ts-ignore: When assigning this function to a variable, JavaScript does not set 'this'
+            connection[`command_${command}_callback`](result);
+        }
     }
 
     parse_message(content: string): { command: Command, args: string[] } {

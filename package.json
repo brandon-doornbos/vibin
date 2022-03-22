@@ -2,7 +2,7 @@
   "name": "vibin",
   "version": "1.0.0",
   "description": "Discord music bot",
-  "main": "dist/vibin.js",
+  "main": "dist/bot.js",
   "type": "module",
   "scripts": {
     "start": "npx tsc && node ."

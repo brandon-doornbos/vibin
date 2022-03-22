@@ -2,6 +2,7 @@ import * as Discord from "discord.js";
 import { GuildConnection } from "./guild_connection.js";
 import tokens from "./config.json" assert { type: "json" };
 
+// eslint-disable-next-line
 enum Command {
     // FIXME: Bind,
     Clear,
@@ -46,7 +47,7 @@ export class Bot {
                 Discord.Intents.FLAGS.GUILD_MESSAGES,
                 Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
                 Discord.Intents.FLAGS.GUILDS,
-            ]
+            ],
         });
 
         this.client.once("ready", (client) => this.on_ready(client));
@@ -66,14 +67,14 @@ export class Bot {
     }
 
     private build_command_cache(): Map<string, Command> {
-        let cache = new Map();
+        const cache = new Map();
 
-        for (let command in Command) {
+        for (const command in Command) {
             if (parseInt(command) >= 0 || command === "Unknown")
                 continue;
 
             let entry = "";
-            for (let letter of command.toLowerCase()) {
+            for (const letter of command.toLowerCase()) {
                 entry += letter;
                 if (!cache.get(entry))
                     cache.set(entry, Command[command]);
@@ -98,8 +99,8 @@ export class Bot {
             message.content.startsWith(`<@${this.client.user?.id}>`)
             || message.content.startsWith(`<@!${this.client.user?.id}>`)
         ) {
-            content = message.content.split('>').slice(1).join('>');
-            if (content[0] === ' ') content = content.slice(1);
+            content = message.content.split(">").slice(1).join(">");
+            if (content[0] === " ") content = content.slice(1);
         } else {
             if (message.content.slice(0, connection.prefix.length) !== connection.prefix)
                 return;
@@ -110,14 +111,14 @@ export class Bot {
 
         const parsed_message = this.parse_message(content);
         const command = Command[parsed_message.command].toLowerCase();
-        // @ts-ignore
-        let embed = await connection[`command_${command}`](message, parsed_message.args);
+        // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
+        const embed = await connection[`command_${command}`](message, parsed_message.args);
         if (!embed.description && embed.fields.length <= 0) {
             embed.setColor("#FF0000");
             embed.setDescription("Not currently playing.");
         }
         const result = await message.reply({ embeds: [embed] });
-        // @ts-ignore
+        // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
         const callback = connection[`command_${command}_callback`];
         if (callback)
             callback(result);
@@ -126,13 +127,13 @@ export class Bot {
     parse_message(content: string): { command: Command, args: string[] } {
         const unknown = { command: Command.Unknown, args: [] };
 
-        let args = content.split(' ');
+        const args = content.split(" ");
 
-        let first_arg = args.shift();
+        const first_arg = args.shift();
         if (!first_arg)
             return unknown;
 
-        let command = this.command_cache.get(first_arg);
+        const command = this.command_cache.get(first_arg);
         if (command === undefined)
             return unknown;
 

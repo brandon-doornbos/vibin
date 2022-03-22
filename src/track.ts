@@ -1,5 +1,5 @@
-import * as ChildProcess from 'child_process';
-import * as DiscordVoice from '@discordjs/voice';
+import * as ChildProcess from "child_process";
+import * as DiscordVoice from "@discordjs/voice";
 
 export class Track {
     url: string;
@@ -14,21 +14,21 @@ export class Track {
 
     create_audio_resource(): Promise<DiscordVoice.AudioResource> {
         return new Promise((resolve, reject) => {
-            let process = ChildProcess.spawn('yt-dlp', [
-                '--output', '-',
-                '--quiet',
-                '--format', 'bestaudio',
-                '--rate-limit', '100K',
-                '--no-cache-dir',
-                '--no-call-home',
-                this.url
-            ], { stdio: [0, 'pipe', 0] });
+            const process = ChildProcess.spawn("yt-dlp", [
+                "--output", "-",
+                "--quiet",
+                "--format", "bestaudio",
+                "--rate-limit", "100K",
+                "--no-cache-dir",
+                "--no-call-home",
+                this.url,
+            ], { stdio: [0, "pipe", 0] });
 
             if (!process.stdout) {
-                reject(new Error('No stdout'));
+                reject(new Error("No stdout"));
                 return;
             }
-            let stream = process.stdout;
+            const stream = process.stdout;
 
             const onError = (error: Error) => {
                 if (!process.killed) process.kill();

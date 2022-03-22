@@ -1,14 +1,13 @@
-function random(low: number = 0, high: number = 0) {
-    if (high) {
+function random(low = 0, high = 0) {
+    if (high)
         return Math.random() * (high - low) + low;
-    } else if (low) {
+    else if (low)
         return Math.random() * low;
-    } else {
+    else
         return Math.random();
-    }
 }
 
-function random_int(low: number = 0, high: number = 0) {
+function random_int(low = 0, high = 0) {
     return Math.floor(random(low, high));
 }
 
@@ -24,7 +23,7 @@ export function seconds_to_hms(d: number) {
     return hDisplay + mDisplay + sDisplay;
 }
 
-export function shuffle(array: any[]) {
+export function shuffle(array: unknown[]) {
     for (let i = array.length - 1; i >= 0; i--) {
         const j = random_int(i + 1);
         const temp = array[i];
@@ -35,10 +34,11 @@ export function shuffle(array: any[]) {
 
 export function string_to_index(s: string, queue_len: number) {
     let num = undefined;
-    if (s === "last") {
+
+    if (s === "last")
         num = queue_len - 1;
-    } else {
+    else
         num = parseInt(s) - 1;
-    }
+
     return num;
 }

@@ -1,5 +1,13 @@
 {
-    "extends": "eslint:recommended",
+    "root": true,
+    "parser": "@typescript-eslint/parser",
+    "plugins": [
+        "@typescript-eslint"
+    ],
+    "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended"
+    ],
     "env": {
         "node": true,
         "es6": true
@@ -17,7 +25,7 @@
         ],
         "brace-style": [
             "error",
-            "stroustrup",
+            "1tbs",
             {
                 "allowSingleLine": true
             }
@@ -30,7 +38,7 @@
         "comma-style": "error",
         "curly": [
             "error",
-            "multi-line",
+            "multi-or-nest",
             "consistent"
         ],
         "dot-location": [
@@ -40,7 +48,10 @@
         "handle-callback-err": "off",
         "indent": [
             "error",
-            "space"
+            4,
+            {
+                "SwitchCase": 1
+            }
         ],
         "keyword-spacing": "error",
         "max-nested-callbacks": [
@@ -109,6 +120,12 @@
         "space-infix-ops": "error",
         "space-unary-ops": "error",
         "spaced-comment": "error",
-        "yoda": "error"
+        "yoda": "error",
+        "@typescript-eslint/ban-ts-comment": [
+            "error",
+            {
+                "ts-ignore": "allow-with-description"
+            }
+        ]
     }
 }

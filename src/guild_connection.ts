@@ -2,7 +2,7 @@ import * as FS from "fs";
 import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
 import { AudioConnection } from "./audio_connection.js";
-import { Bot } from "./bot.js"
+import { Bot } from "./bot.js";
 
 export class GuildConnection {
     text_channel: Discord.TextChannel;
@@ -21,7 +21,7 @@ export class GuildConnection {
         try {
             return FS.readFileSync(`prefixes/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, "utf8").trim();
         } catch {
-            return '$';
+            return "$";
         }
     }
 
@@ -54,7 +54,7 @@ export class GuildConnection {
         this.audio_connection = new AudioConnection(voice_channel, this.text_channel);
     }
 
-    async command_clear(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_clear(message: Discord.Message): Promise<Discord.MessageEmbed> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
@@ -65,7 +65,7 @@ export class GuildConnection {
         return new Discord.MessageEmbed();
     }
 
-    async command_help(_message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_help(): Promise<Discord.MessageEmbed> {
         return new Discord.MessageEmbed()
             .setColor("#0099FF")
             .setTitle("Commands")
@@ -86,8 +86,8 @@ export class GuildConnection {
             .setFooter({ text: `Use ${this.prefix} with a command or @ me` });
     }
 
-    async command_leave(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
-        let embed = new Discord.MessageEmbed();
+    async command_leave(message: Discord.Message): Promise<Discord.MessageEmbed> {
+        const embed = new Discord.MessageEmbed();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -114,7 +114,7 @@ export class GuildConnection {
         return new Discord.MessageEmbed();
     }
 
-    async command_pause(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_pause(message: Discord.Message): Promise<Discord.MessageEmbed> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
@@ -139,7 +139,7 @@ export class GuildConnection {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
 
-            const result = await this.audio_connection.play(args.join(' '));
+            const result = await this.audio_connection.play(args.join(" "));
             if (result)
                 return result;
         }
@@ -156,7 +156,7 @@ export class GuildConnection {
     }
 
     async command_queue(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -200,22 +200,23 @@ export class GuildConnection {
             ["▶", "next"],
             ["⏭", "last"],
             ["🔀", "shuffle"],
-            ["🔄", "refresh"]
+            ["🔄", "refresh"],
         ]);
 
-        const filter = (_: any, user: Discord.User) => user.id !== Bot.the().client.user?.id;
+        const filter = (_: Discord.MessageReaction, user: Discord.User) => user.id !== Bot.the().client.user?.id;
         const reactionCollector = message.createReactionCollector({ filter });
         reactionCollector.on("collect", async (reaction) => {
             reaction.users.fetch().then((users) => {
-                for (let [id, user] of users)
+                for (const [id, user] of users) {
                     if (id !== Bot.the().client.user?.id)
                         reaction.users.remove(user);
+                }
             });
 
             if (!reaction.emoji.name)
                 return;
 
-            const footer = message.embeds[0].footer?.text.split(' ');
+            const footer = message.embeds[0].footer?.text.split(" ");
             let page, pages;
             if (footer) {
                 page = parseInt(footer[1]);
@@ -235,7 +236,7 @@ export class GuildConnection {
             }
         });
 
-        for (let emoji of emojis.keys())
+        for (const emoji of emojis.keys())
             message.react(emoji);
     }
 
@@ -261,7 +262,7 @@ export class GuildConnection {
         return new Discord.MessageEmbed();
     }
 
-    async command_resume(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_resume(message: Discord.Message): Promise<Discord.MessageEmbed> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
@@ -272,7 +273,7 @@ export class GuildConnection {
         return new Discord.MessageEmbed();
     }
 
-    async command_shuffle(message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_shuffle(message: Discord.Message): Promise<Discord.MessageEmbed> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return this.audio_connection.wrong_voice_channel();
@@ -283,7 +284,7 @@ export class GuildConnection {
         return new Discord.MessageEmbed();
     }
 
-    async command_unknown(_message: Discord.Message, _args: string[]): Promise<Discord.MessageEmbed> {
+    async command_unknown(): Promise<Discord.MessageEmbed> {
         return new Discord.MessageEmbed()
             .setColor("#FF0000")
             .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`);

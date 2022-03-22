@@ -35,7 +35,7 @@ export class AudioConnection {
             channelId: voice_channel.id,
             guildId: voice_channel.guild.id,
             adapterCreator: voice_channel.guild.voiceAdapterCreator,
-            selfDeaf: true
+            selfDeaf: true,
         });
 
         this.audio_player = DiscordVoice.createAudioPlayer();
@@ -49,17 +49,17 @@ export class AudioConnection {
         this.ready_lock = false;
         this.destroyed = false;
 
-        // @ts-ignore
+        // @ts-ignore: For some reason TypeScript won't accept this valid argument
         this.voice_connection.on("stateChange", (_, new_state) => this.voice_state_change(new_state));
 
-        // @ts-ignore
+        // @ts-ignore: For some reason TypeScript won't accept this valid argument
         this.audio_player.on("stateChange", (old_state, new_state) => this.player_state_change(old_state, new_state));
-        this.audio_player.on("error", (error: { message: string; name: string; resource: any; }) => {
+        this.audio_player.on("error", (error: { message: string; name: string; resource: DiscordVoice.AudioResource; }) => {
             console.warn(error);
 
             const embed = new Discord.MessageEmbed()
-                .setColor('#FF0000')
-                .addField('Error', error.message);
+                .setColor("#FF0000")
+                .addField("Error", error.message);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
         });
 
@@ -131,8 +131,8 @@ export class AudioConnection {
         } else if (new_state.status === DiscordVoice.AudioPlayerStatus.Playing) {
             // entered playing state, started next track
             const embed = new Discord.MessageEmbed()
-                .setColor('#0099FF')
-                .addField('Now playing', (new_state.resource as DiscordVoice.AudioResource<Track>).metadata.title);
+                .setColor("#0099FF")
+                .addField("Now playing", (new_state.resource as DiscordVoice.AudioResource<Track>).metadata.title);
 
             if (this.now_playing_message)
                 this.now_playing_message.delete();
@@ -142,10 +142,10 @@ export class AudioConnection {
 
             const emojis: Map<string, string> = new Map([
                 ["⏯", "play_pause"],
-                ["⏩", "skip"]
+                ["⏩", "skip"],
             ]);
 
-            const filter = (_: any, user: Discord.User) => user.id !== Bot.the().client.user?.id;
+            const filter = (_: Discord.MessageReaction, user: Discord.User) => user.id !== Bot.the().client.user?.id;
             const reactionCollector = message.createReactionCollector({ filter });
             reactionCollector.on("collect", async (reaction) => {
                 if (!reaction.emoji.name)
@@ -156,9 +156,10 @@ export class AudioConnection {
                         if (!this.audio_player.unpause()) {
                             this.audio_player.pause();
                             reaction.users.fetch().then((users) => {
-                                for (let [id, user] of users)
+                                for (const [id, user] of users) {
                                     if (id !== Bot.the().client.user?.id)
                                         reaction.users.remove(user);
+                                }
                             });
                         }
                         break;
@@ -166,7 +167,7 @@ export class AudioConnection {
                 }
             });
 
-            for (let emoji of emojis.keys())
+            for (const emoji of emojis.keys())
                 message.react(emoji);
         }
     }
@@ -182,7 +183,7 @@ export class AudioConnection {
     }
 
     move(source: string, target: string) {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         const from = string_to_index(source, this.queue.length);
         const to = string_to_index(target, this.queue.length);
@@ -209,7 +210,7 @@ export class AudioConnection {
     }
 
     pause() {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.pause();
@@ -222,13 +223,13 @@ export class AudioConnection {
     }
 
     async play(url: string) {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         try {
             if (YTPL.validateID(url)) {
                 const playlist = await YTPL(url, { limit: Infinity });
                 let duration = 0;
-                for (let item of playlist.items) {
+                for (const item of playlist.items) {
                     const track = new Track(item.shortUrl, item.title, item.durationSec || 0);
                     this.enqueue(track);
                     duration += item.durationSec || 0;
@@ -277,16 +278,15 @@ export class AudioConnection {
     }
 
     skip(amount: string) {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             const current_title = (this.audio_player.state.resource as DiscordVoice.AudioResource<Track>).metadata.title;
 
             if (amount) {
                 let amount_num = parseInt(amount) - 1;
-                if (amount_num > this.queue.length) {
+                if (amount_num > this.queue.length)
                     amount_num = this.queue.length;
-                }
 
                 this.queue.splice(0, amount_num);
 
@@ -303,7 +303,7 @@ export class AudioConnection {
     }
 
     remove(index: string) {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
         const idx = string_to_index(index, this.queue.length);
 
         if (idx >= 0 && idx < this.queue.length) {
@@ -320,7 +320,7 @@ export class AudioConnection {
     }
 
     resume() {
-        let embed = new Discord.MessageEmbed();
+        const embed = new Discord.MessageEmbed();
 
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.unpause();
@@ -392,7 +392,7 @@ export class AudioConnection {
         this.audio_player.stop(true);
     }
 
-    async process_queue(retry_count = 0): Promise<any> {
+    async process_queue(retry_count = 0) {
         if (this.queue_lock || this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle || this.queue.length <= 0)
             return;
 
@@ -408,15 +408,15 @@ export class AudioConnection {
             console.warn(error);
 
             const embed = new Discord.MessageEmbed()
-                .setColor('#FF0000')
-                .addField('Error', error.message);
+                .setColor("#FF0000")
+                .addField("Error", error.message);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
-            if (retry_count < 5) {
+            if (retry_count < 5)
                 this.queue.unshift(next_track);
-            } else {
+            else
                 retry_count = -1;
-            }
+
             this.queue_lock = false;
             return this.process_queue(retry_count + 1);
         });

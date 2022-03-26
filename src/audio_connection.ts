@@ -126,7 +126,11 @@ export class AudioConnection {
     async player_state_change(old_state: DiscordVoice.AudioPlayerState, new_state: DiscordVoice.AudioPlayerState) {
         if (new_state.status === DiscordVoice.AudioPlayerStatus.Idle && old_state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             // now idle, play next track if available
-            // (old_state.resource as DiscordVoice.AudioResource<Track>).metadata.on_finish();
+            if (this.now_playing_message) {
+                this.now_playing_message.delete();
+                this.now_playing_message = null;
+            }
+
             void this.process_queue();
         } else if (new_state.status === DiscordVoice.AudioPlayerStatus.Playing) {
             // entered playing state, started next track
@@ -134,8 +138,10 @@ export class AudioConnection {
                 .setColor("#0099FF")
                 .addField("Now playing", (new_state.resource as DiscordVoice.AudioResource<Track>).metadata.title);
 
-            if (this.now_playing_message)
+            if (this.now_playing_message) {
                 this.now_playing_message.delete();
+                this.now_playing_message = null;
+            }
 
             const message = await this.text_channel.send({ embeds: [embed] });
             this.now_playing_message = message;

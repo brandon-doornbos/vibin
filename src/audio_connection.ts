@@ -82,7 +82,7 @@ export class AudioConnection {
                     if (this.voice_connection.joinConfig.channelId)
                         this.voice_channel = this.voice_connection.joinConfig.channelId;
                 } catch {
-                    this.voice_connection.destroy();
+                    this.destroy();
                     this.text_channel.send("y u kick :(");
                     // Probably removed from voice channel
                 }
@@ -96,7 +96,7 @@ export class AudioConnection {
                 /**
                  * The disconnect in this case may be recoverable, but we have no more remaining attempts - destroy.
                  */
-                this.voice_connection.destroy();
+                this.destroy();
             }
         } else if (new_state.status === DiscordVoice.VoiceConnectionStatus.Destroyed) {
             /**
@@ -116,7 +116,7 @@ export class AudioConnection {
             try {
                 await DiscordVoice.entersState(this.voice_connection, DiscordVoice.VoiceConnectionStatus.Ready, 20_000);
             } catch {
-                if (this.voice_connection.state.status !== DiscordVoice.VoiceConnectionStatus.Destroyed) this.voice_connection.destroy();
+                if (this.voice_connection.state.status !== DiscordVoice.VoiceConnectionStatus.Destroyed) this.destroy();
             } finally {
                 this.ready_lock = false;
             }
@@ -430,5 +430,6 @@ export class AudioConnection {
 
     destroy() {
         this.voice_connection.destroy();
+        this.destroyed = true;
     }
 }

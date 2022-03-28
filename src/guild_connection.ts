@@ -54,19 +54,19 @@ export class GuildConnection {
         this.audio_connection = new AudioConnection(voice_channel, this.text_channel);
     }
 
-    async command_clear(message: Discord.Message): Promise<Discord.MessageEmbed> {
+    async command_clear(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.clear_queue();
+            return [this.audio_connection.clear_queue()];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_help(): Promise<Discord.MessageEmbed> {
-        return new Discord.MessageEmbed()
+    async command_help(): Promise<Discord.MessageEmbed[]> {
+        return [new Discord.MessageEmbed()
             .setColor("#0099FF")
             .setTitle("Commands")
             .setDescription(`
@@ -83,15 +83,15 @@ export class GuildConnection {
                 **resume** - Resume paused music playback
                 **shuffle** - Shuffle the queue
             `)
-            .setFooter({ text: `Use ${this.prefix} with a command or @ me` });
+            .setFooter({ text: `Use ${this.prefix} with a command or @ me` })];
     }
 
-    async command_leave(message: Discord.Message): Promise<Discord.MessageEmbed> {
+    async command_leave(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         const embed = new Discord.MessageEmbed();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
             this.audio_connection.destroy();
             this.audio_connection = null;
@@ -100,67 +100,67 @@ export class GuildConnection {
             embed.setDescription("bai 👋🏻");
         }
 
-        return embed;
+        return [embed];
     }
 
-    async command_move(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_move(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.move(args[0], args[1]);
+            return [this.audio_connection.move(args[0], args[1])];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_pause(message: Discord.Message): Promise<Discord.MessageEmbed> {
+    async command_pause(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.pause();
+            return [this.audio_connection.pause()];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_play(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_play(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         const voice_channel = message.member?.voice.channel;
         if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
             this.request_voice_connection(voice_channel);
         } else {
-            return new Discord.MessageEmbed()
+            return [new Discord.MessageEmbed()
                 .setColor("#FF0000")
-                .setDescription("Please join a voice channel.");
+                .setDescription("Please join a voice channel.")];
         }
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
             const result = await this.audio_connection.play(args.join(" "));
             if (result)
-                return result;
+                return [result];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         this.update_prefix(args[0]);
 
-        return new Discord.MessageEmbed()
+        return [new Discord.MessageEmbed()
             .setColor("#00FF00")
-            .setDescription(`Prefix changed to: ${this.prefix}`);
+            .setDescription(`Prefix changed to: ${this.prefix}`)];
     }
 
-    async command_queue(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_queue(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         const embed = new Discord.MessageEmbed();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
             const page = args[0];
             const queue_obj = this.audio_connection.stringify_queue(page);
@@ -182,7 +182,7 @@ export class GuildConnection {
             }
         }
 
-        return embed;
+        return [embed];
     }
 
     command_queue_callback(message: Discord.Message) {
@@ -223,16 +223,16 @@ export class GuildConnection {
                 pages = parseInt(footer[3]);
             }
             switch (emojis.get(reaction.emoji.name)) {
-                case "first": message.edit({ embeds: [await this.command_queue(message, ["1"])] }); break;
-                case "previous": message.edit({ embeds: [await this.command_queue(message, [page ? (page - 1).toString() : "1"])] }); break;
-                case "next": message.edit({ embeds: [await this.command_queue(message, [page ? (page + 1).toString() : "1"])] }); break;
-                case "last": message.edit({ embeds: [await this.command_queue(message, [pages ? pages.toString() : "1"])] }); break;
+                case "first": message.edit({ embeds: [(await this.command_queue(message, ["1"]))[0]] }); break;
+                case "previous": message.edit({ embeds: [(await this.command_queue(message, [page ? (page - 1).toString() : "1"]))[0]] }); break;
+                case "next": message.edit({ embeds: [(await this.command_queue(message, [page ? (page + 1).toString() : "1"]))[0]] }); break;
+                case "last": message.edit({ embeds: [(await this.command_queue(message, [pages ? pages.toString() : "1"]))[0]] }); break;
                 case "shuffle":
                     if (this.audio_connection)
                         this.audio_connection.shuffle();
-                    message.edit({ embeds: [await this.command_queue(message, [page ? page.toString() : "1"])] });
+                    message.edit({ embeds: [(await this.command_queue(message, [page ? page.toString() : "1"]))[0]] });
                     break;
-                case "refresh": message.edit({ embeds: [await this.command_queue(message, [page ? page.toString() : "1"])] }); break;
+                case "refresh": message.edit({ embeds: [(await this.command_queue(message, [page ? page.toString() : "1"]))[0]] }); break;
             }
         });
 
@@ -240,53 +240,53 @@ export class GuildConnection {
             message.react(emoji);
     }
 
-    async command_skip(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_skip(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.skip(args[0]);
+            return [this.audio_connection.skip(args[0])];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_remove(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed> {
+    async command_remove(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.remove(args[0]);
+            return [this.audio_connection.remove(args[0])];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_resume(message: Discord.Message): Promise<Discord.MessageEmbed> {
+    async command_resume(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.resume();
+            return [this.audio_connection.resume()];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_shuffle(message: Discord.Message): Promise<Discord.MessageEmbed> {
+    async command_shuffle(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
-                return this.audio_connection.wrong_voice_channel();
+                return [this.audio_connection.wrong_voice_channel()];
 
-            return this.audio_connection.shuffle();
+            return [this.audio_connection.shuffle()];
         }
 
-        return new Discord.MessageEmbed();
+        return [new Discord.MessageEmbed()];
     }
 
-    async command_unknown(): Promise<Discord.MessageEmbed> {
-        return new Discord.MessageEmbed()
+    async command_unknown(): Promise<Discord.MessageEmbed[]> {
+        return [new Discord.MessageEmbed()
             .setColor("#FF0000")
-            .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`);
+            .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`)];
     }
 }

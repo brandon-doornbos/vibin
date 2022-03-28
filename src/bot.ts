@@ -112,16 +112,18 @@ export class Bot {
         const parsed_message = this.parse_message(content);
         const command = Command[parsed_message.command].toLowerCase();
         // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
-        const embed = await connection[`command_${command}`](message, parsed_message.args);
-        if (!embed.description && embed.fields.length <= 0) {
-            embed.setColor("#FF0000");
-            embed.setDescription("Not currently playing.");
-        }
-        const result = await message.reply({ embeds: [embed] });
-        // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
-        if (connection[`command_${command}_callback`]) {
-            // @ts-ignore: When assigning this function to a variable, JavaScript does not set 'this'
-            connection[`command_${command}_callback`](result);
+        const embeds = await connection[`command_${command}`](message, parsed_message.args);
+        for (const embed of embeds) {
+            if (!embed.description && embed.fields.length <= 0) {
+                embed.setColor("#FF0000");
+                embed.setDescription("Not currently playing.");
+            }
+            const result = await message.reply({ embeds: [embed] });
+            // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
+            if (connection[`command_${command}_callback`]) {
+                // @ts-ignore: When assigning this function to a variable, JavaScript does not set 'this'
+                connection[`command_${command}_callback`](result);
+            }
         }
     }
 

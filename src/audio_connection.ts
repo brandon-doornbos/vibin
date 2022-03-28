@@ -136,7 +136,8 @@ export class AudioConnection {
             // entered playing state, started next track
             const embed = new Discord.MessageEmbed()
                 .setColor("#0099FF")
-                .addField("Now playing", (new_state.resource as DiscordVoice.AudioResource<Track>).metadata.title);
+                // @ts-ignore: No TypeScript, this cannot be null
+                .addField("Now playing", this.now_playing_resource().metadata.title);
 
             if (this.now_playing_message) {
                 this.now_playing_message.delete();
@@ -186,6 +187,13 @@ export class AudioConnection {
         return new Discord.MessageEmbed()
             .setColor("#FF0000")
             .setDescription("Please join the corrent voice channel.");
+    }
+
+    now_playing_resource() {
+        if (this.audio_player.state.status === DiscordVoice.AudioPlayerStatus.Idle)
+            return null;
+
+        return (this.audio_player.state.resource as DiscordVoice.AudioResource<Track>);
     }
 
     move(source: string, target: string) {
@@ -286,24 +294,24 @@ export class AudioConnection {
     skip(amount: string) {
         const embed = new Discord.MessageEmbed();
 
-        if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
-            const current_title = (this.audio_player.state.resource as DiscordVoice.AudioResource<Track>).metadata.title;
+        const resource = this.now_playing_resource();
+        if (!resource)
+            return embed;
 
-            if (amount) {
-                let amount_num = parseInt(amount) - 1;
-                if (amount_num > this.queue.length)
-                    amount_num = this.queue.length;
+        if (amount) {
+            let amount_num = parseInt(amount) - 1;
+            if (amount_num > this.queue.length)
+                amount_num = this.queue.length;
 
-                this.queue.splice(0, amount_num);
+            this.queue.splice(0, amount_num);
 
-                embed.addField("Skipped", `${current_title} and the next ${amount_num - 1} tracks.`);
-            } else {
-                embed.addField("Skipped", current_title);
-            }
-
-            this.audio_player.stop();
-            embed.setColor("#0099FF");
+            embed.addField("Skipped", `${resource.metadata.title} and the next ${amount_num - 1} tracks.`);
+        } else {
+            embed.addField("Skipped", resource.metadata.title);
         }
+
+        this.audio_player.stop();
+        embed.setColor("#0099FF");
 
         return embed;
     }
@@ -347,10 +355,10 @@ export class AudioConnection {
     }
 
     now_playing() {
-        if (this.audio_player.state.status === DiscordVoice.AudioPlayerStatus.Idle)
-            return;
+        const resource = this.now_playing_resource();
+        if (!resource)
+            return null;
 
-        const resource = (this.audio_player.state.resource as DiscordVoice.AudioResource<Track>);
         const current_time = seconds_to_hms(Math.floor(resource.playbackDuration / 1000));
         const total_time = seconds_to_hms(resource.metadata.length);
         return `*${resource.metadata.title}* - ${current_time} / ${total_time}`;

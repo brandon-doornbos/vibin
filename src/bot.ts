@@ -9,6 +9,7 @@ enum Command {
     Help,
     // FIXME: Join
     Leave,
+    Lyrics,
     Move,
     Pause,
     Play,

@@ -134,7 +134,7 @@ export class Bot {
         if (!first_arg)
             return unknown;
 
-        const command = this.command_cache.get(first_arg);
+        const command = this.command_cache.get(first_arg.toLowerCase());
         if (command === undefined)
             return unknown;
 

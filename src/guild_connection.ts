@@ -1,7 +1,7 @@
 import * as FS from "fs";
 import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
-import * as FindTheLyrics from "./lyrics.js";
+import { find_lyrics } from "./lyrics.js";
 import { AudioConnection } from "./audio_connection.js";
 import { Bot } from "./bot.js";
 
@@ -124,31 +124,33 @@ export class GuildConnection {
             return embeds;
         }
 
-        await FindTheLyrics.find(title).then((lyrics) => {
-            embeds[0].setColor("#0099FF");
-            embeds[0].setTitle("Lyrics");
+        let lyrics = await find_lyrics(title);
+        if (lyrics instanceof Error) {
+            console.error(lyrics);
+            embeds[0].setColor("#FF0000");
+            embeds[0].setDescription(lyrics.message);
+            return embeds;
+        }
 
-            const embed_threshold = 5900;
-            if (lyrics.length < embed_threshold) {
-                embeds[0].setDescription(lyrics);
-            } else {
-                while (lyrics.length > embed_threshold) {
-                    for (let i = embed_threshold; i >= 0; i -= 1) {
-                        if (lyrics[i] === "\n" && lyrics.slice(0, i).trim() !== "") {
-                            embeds[embeds.length - 1].setColor("#0099FF");
-                            embeds[embeds.length - 1].setDescription(lyrics.slice(0, i));
-                            embeds.push(new Discord.MessageEmbed());
-                            lyrics = lyrics.slice(i);
-                        }
+        embeds[0].setColor("#0099FF");
+        embeds[0].setTitle("Lyrics");
+
+        const embed_threshold = 5900;
+        if (lyrics.length < embed_threshold) {
+            embeds[0].setDescription(lyrics);
+        } else {
+            while (lyrics.length > embed_threshold) {
+                for (let i = embed_threshold; i >= 0; i -= 1) {
+                    if (lyrics[i] === "\n" && lyrics.slice(0, i).trim() !== "") {
+                        embeds[embeds.length - 1].setColor("#0099FF");
+                        embeds[embeds.length - 1].setDescription(lyrics.slice(0, i));
+                        embeds.push(new Discord.MessageEmbed());
+                        lyrics = lyrics.slice(i);
                     }
                 }
-                embeds.splice(embeds.length - 1, embeds.length);
             }
-        }).catch((error) => {
-            console.error(error);
-            embeds[0].setColor("#FF0000");
-            embeds[0].setDescription(error.message || error);
-        });
+            embeds.splice(embeds.length - 1, embeds.length);
+        }
 
         return embeds;
     }

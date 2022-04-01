@@ -1,7 +1,7 @@
 import * as FS from "fs";
 import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
-import * as FindTheLyrics from "../../../../tmp/findthelyrics/dist/index.js";
+import * as FindTheLyrics from "./lyrics.js";
 import { AudioConnection } from "./audio_connection.js";
 import { Bot } from "./bot.js";
 

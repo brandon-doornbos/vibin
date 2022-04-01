@@ -17,7 +17,9 @@
     "sodium": "^3.0.2",
     "ytdl-core": "^4.11.0",
     "ytpl": "^2.3.0",
-    "ytsr": "^3.6.0"
+    "ytsr": "^3.6.0",
+    "cheerio": "^1.0.0-rc.10",
+    "got": "^12.0.3"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.16.0",

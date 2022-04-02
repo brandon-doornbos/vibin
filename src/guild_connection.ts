@@ -124,7 +124,7 @@ export class GuildConnection {
             return embeds;
         }
 
-        let lyrics = await find_lyrics(title);
+        const lyrics = await find_lyrics(title);
         if (lyrics instanceof Error) {
             console.error(lyrics);
             embeds[0].setColor("#FF0000");
@@ -135,22 +135,24 @@ export class GuildConnection {
         embeds[0].setColor("#0099FF");
         embeds[0].setTitle("Lyrics");
 
-        const embed_threshold = 5900;
-        if (lyrics.length < embed_threshold) {
-            embeds[0].setDescription(lyrics);
+        const embed_threshold = 5800;
+        let lyric_content = lyrics.content;
+        if (lyric_content.length < embed_threshold) {
+            embeds[0].setDescription(lyric_content);
         } else {
-            while (lyrics.length > embed_threshold) {
+            while (lyric_content.length > embed_threshold) {
                 for (let i = embed_threshold; i >= 0; i -= 1) {
-                    if (lyrics[i] === "\n" && lyrics.slice(0, i).trim() !== "") {
+                    if (lyric_content[i] === "\n" && lyric_content.slice(0, i).trim() !== "") {
                         embeds[embeds.length - 1].setColor("#0099FF");
-                        embeds[embeds.length - 1].setDescription(lyrics.slice(0, i));
+                        embeds[embeds.length - 1].setDescription(lyric_content.slice(0, i));
                         embeds.push(new Discord.MessageEmbed());
-                        lyrics = lyrics.slice(i);
+                        lyric_content = lyric_content.slice(i);
                     }
                 }
             }
             embeds.splice(embeds.length - 1, embeds.length);
         }
+        embeds[embeds.length - 1].setFooter({ "text": lyrics.url });
 
         return embeds;
     }

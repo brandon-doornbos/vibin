@@ -1,6 +1,11 @@
 import * as cheerio from "cheerio";
 
-export async function find_lyrics(query_string: string): Promise<string | Error> {
+interface Lyrics {
+    content: string,
+    url: string
+}
+
+export async function find_lyrics(query_string: string): Promise<Lyrics | Error> {
     if (!query_string)
         return new Error("Query string required.");
 
@@ -26,7 +31,7 @@ export async function find_lyrics(query_string: string): Promise<string | Error>
                 lyrics += cheerio.load(cheerio.load(elem).html().replace(/<br>/gi, "\n")).text();
                 lyrics += "\n";
             });
-            return lyrics;
+            return { content: lyrics, url: "https://genius.com" + genius_search.response.sections[0].hits[0].result.path };
         }
     }
 
@@ -46,7 +51,7 @@ export async function find_lyrics(query_string: string): Promise<string | Error>
 
         const lyrics = cheerio.load(musix_result)(".mxm-lyrics .lyrics__content__ok");
         if (lyrics)
-            return lyrics.text();
+            return { content: lyrics.text(), url: "https://www.musixmatch.com" + musix_first_element.attribs.href };
     }
 
     return new Error(`Could not find lyrics for: "${query_string}"`);

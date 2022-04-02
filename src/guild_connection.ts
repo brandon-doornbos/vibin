@@ -120,6 +120,7 @@ export class GuildConnection {
                 return embeds;
 
             title = resource.metadata.title;
+            title = title.replace(/\((.*)\)|feat(\.)*|ft(\.)*|video*|lyric(s)*/gi, "").trim();
         } else {
             return embeds;
         }

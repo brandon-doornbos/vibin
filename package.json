@@ -5,7 +5,7 @@
   "main": "dist/bot.js",
   "type": "module",
   "scripts": {
-    "start": "npx tsc && node . --experimental-fetch"
+    "start": "npx tsc && node --experimental-fetch ."
   },
   "author": "Brandon Doornbos",
   "license": "GPL-3.0",

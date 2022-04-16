@@ -58,7 +58,7 @@ export class AudioConnection {
             console.warn(error);
 
             const embed = new Discord.MessageEmbed()
-                .setColor("#FF0000")
+                .setColor("RED")
                 .addField("Error", error.message);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
         });
@@ -135,7 +135,7 @@ export class AudioConnection {
         } else if (new_state.status === DiscordVoice.AudioPlayerStatus.Playing) {
             // entered playing state, started next track
             const embed = new Discord.MessageEmbed()
-                .setColor("#0099FF")
+                .setColor("BLUE")
                 // @ts-ignore: No TypeScript, this cannot be null
                 .addField("Now playing", this.now_playing_resource().metadata.title);
 
@@ -185,7 +185,7 @@ export class AudioConnection {
 
     wrong_voice_channel() {
         return new Discord.MessageEmbed()
-            .setColor("#FF0000")
+            .setColor("RED")
             .setDescription("Please join the corrent voice channel.");
     }
 
@@ -207,7 +207,7 @@ export class AudioConnection {
             && (from >= 0 && from < this.queue.length)
             && (to >= 0 && to < this.queue.length)
         ) {
-            embed.setColor("#0099FF");
+            embed.setColor("GREEN");
             embed.setDescription(`Moved *${this.queue[from].title}* to index ${to}`);
 
             for (let i = from; i > to; i -= 1) {
@@ -216,7 +216,7 @@ export class AudioConnection {
                 this.queue[i] = temp;
             }
         } else {
-            embed.setColor("#FF0000");
+            embed.setColor("RED");
             embed.setDescription("Incorrect index or indices");
         }
 
@@ -229,7 +229,7 @@ export class AudioConnection {
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.pause();
 
-            embed.setColor("#0099FF");
+            embed.setColor("GREEN");
             embed.setDescription("Paused");
         }
 
@@ -249,7 +249,7 @@ export class AudioConnection {
                     duration += item.durationSec || 0;
                 }
 
-                embed.setColor("#00FF00");
+                embed.setColor("GREEN");
                 embed.setThumbnail(playlist.thumbnails[0].url || "");
                 embed.addField("Added playlist", `[${playlist.title}](${playlist.url})`);
                 embed.addField("Length", seconds_to_hms(duration), true);
@@ -260,7 +260,7 @@ export class AudioConnection {
                 const track = new Track(url, video.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed.setColor("#00FF00");
+                embed.setColor("GREEN");
                 embed.setThumbnail(video.thumbnails[0].url);
                 embed.addField("Added track", `[${track.title}](${url})`);
                 embed.addField("Length", seconds_to_hms(track.length));
@@ -276,7 +276,7 @@ export class AudioConnection {
                 const track = new Track(firstResult.url, firstResult.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed.setColor("#00FF00");
+                embed.setColor("GREEN");
                 embed.setThumbnail(video.thumbnails[0].url);
                 embed.addField("Added track", `[${track.title}](${firstResult.url})`);
                 embed.addField("Length", seconds_to_hms(track.length));
@@ -284,7 +284,7 @@ export class AudioConnection {
         } catch (error) {
             console.warn(error);
             return new Discord.MessageEmbed()
-                .setColor("#FF0000")
+                .setColor("RED")
                 .setDescription("Failed to play track.");
         }
 
@@ -311,7 +311,7 @@ export class AudioConnection {
         }
 
         this.audio_player.stop();
-        embed.setColor("#0099FF");
+        embed.setColor("GREEN");
 
         return embed;
     }
@@ -321,12 +321,12 @@ export class AudioConnection {
         const idx = string_to_index(index, this.queue.length);
 
         if (idx >= 0 && idx < this.queue.length) {
-            embed.setColor("#0099FF");
+            embed.setColor("GREEN");
             embed.addField("Removed track", this.queue[idx].title);
 
             this.queue.splice(idx, 1);
         } else {
-            embed.setColor("#FF0000");
+            embed.setColor("RED");
             embed.addField("Incorrect index", "😭");
         }
 
@@ -339,7 +339,7 @@ export class AudioConnection {
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.unpause();
 
-            embed.setColor("#0099FF");
+            embed.setColor("GREEN");
             embed.setDescription("Resumed");
         }
 
@@ -350,7 +350,7 @@ export class AudioConnection {
         shuffle(this.queue);
 
         return new Discord.MessageEmbed()
-            .setColor("#0099FF")
+            .setColor("GREEN")
             .setDescription("Shuffled queue");
     }
 
@@ -396,7 +396,7 @@ export class AudioConnection {
         this.queue = [];
 
         return new Discord.MessageEmbed()
-            .setColor("#0099FF")
+            .setColor("GREEN")
             .setDescription("Cleared queue");
     }
 
@@ -422,7 +422,7 @@ export class AudioConnection {
             console.warn(error);
 
             const embed = new Discord.MessageEmbed()
-                .setColor("#FF0000")
+                .setColor("RED")
                 .addField("Error", error.message);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 

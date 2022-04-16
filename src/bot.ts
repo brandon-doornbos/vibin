@@ -116,7 +116,7 @@ export class Bot {
         const embeds = await connection[`command_${command}`](message, parsed_message.args);
         for (const embed of embeds) {
             if (!embed.description && embed.fields.length <= 0) {
-                embed.setColor("#FF0000");
+                embed.setColor("RED");
                 embed.setDescription("Not currently playing.");
             }
             const result = await message.reply({ embeds: [embed] });

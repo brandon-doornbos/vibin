@@ -84,7 +84,7 @@ export class GuildConnection {
 
     async command_help(): Promise<Discord.MessageEmbed[]> {
         return [new Discord.MessageEmbed()
-            .setColor("#0099FF")
+            .setColor("BLUE")
             .setTitle("Commands")
             .setDescription(`
                 **bind** - Bind to a text channel
@@ -112,19 +112,19 @@ export class GuildConnection {
             this.request_voice_connection(voice_channel);
         } else {
             return [new Discord.MessageEmbed()
-                .setColor("#FF0000")
+                .setColor("RED")
                 .setDescription("Please join a voice channel.")];
         }
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message)) {
                 return [new Discord.MessageEmbed()
-                    .setColor("#FF0000")
+                    .setColor("RED")
                     .setDescription("I'm already in a voice channel!")];
             }
 
             return [new Discord.MessageEmbed()
-                .setColor("#00FF00")
+                .setColor("GREEN")
                 .setDescription("Joined channel!")];
         }
 
@@ -141,7 +141,7 @@ export class GuildConnection {
             this.audio_connection.destroy();
             this.audio_connection = null;
 
-            embed.setColor("#FF0000");
+            embed.setColor("RED");
             embed.setDescription("bai 👋🏻");
         }
 
@@ -171,12 +171,12 @@ export class GuildConnection {
         const lyrics = await find_lyrics(title);
         if (lyrics instanceof Error) {
             console.error(lyrics);
-            embeds[0].setColor("#FF0000");
+            embeds[0].setColor("RED");
             embeds[0].setDescription(lyrics.message);
             return embeds;
         }
 
-        embeds[0].setColor("#0099FF");
+        embeds[0].setColor("BLUE");
         embeds[0].setTitle("Lyrics");
 
         const embed_threshold = 5800;
@@ -187,7 +187,7 @@ export class GuildConnection {
             while (lyric_content.length > embed_threshold) {
                 for (let i = embed_threshold; i >= 0; i -= 1) {
                     if (lyric_content[i] === "\n" && lyric_content.slice(0, i).trim() !== "") {
-                        embeds[embeds.length - 1].setColor("#0099FF");
+                        embeds[embeds.length - 1].setColor("BLUE");
                         embeds[embeds.length - 1].setDescription(lyric_content.slice(0, i));
                         embeds.push(new Discord.MessageEmbed());
                         lyric_content = lyric_content.slice(i);
@@ -229,7 +229,7 @@ export class GuildConnection {
             this.request_voice_connection(voice_channel);
         } else {
             return [new Discord.MessageEmbed()
-                .setColor("#FF0000")
+                .setColor("RED")
                 .setDescription("Please join a voice channel.")];
         }
 
@@ -249,7 +249,7 @@ export class GuildConnection {
         this.update_prefix(args[0]);
 
         return [new Discord.MessageEmbed()
-            .setColor("#00FF00")
+            .setColor("GREEN")
             .setDescription(`Prefix changed to: ${this.prefix}`)];
     }
 
@@ -264,7 +264,7 @@ export class GuildConnection {
             const queue_obj = this.audio_connection.stringify_queue(page);
             const now_playing = this.audio_connection.now_playing();
 
-            embed.setColor("#0099FF");
+            embed.setColor("BLUE");
             if (now_playing) {
                 embed.setTitle("Now Playing");
                 embed.setDescription(now_playing);
@@ -384,7 +384,7 @@ export class GuildConnection {
 
     async command_unknown(): Promise<Discord.MessageEmbed[]> {
         return [new Discord.MessageEmbed()
-            .setColor("#FF0000")
+            .setColor("RED")
             .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`)];
     }
 }

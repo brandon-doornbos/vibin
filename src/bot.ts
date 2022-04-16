@@ -7,7 +7,7 @@ enum Command {
     // FIXME: Bind,
     Clear,
     Help,
-    // FIXME: Join
+    Join,
     Leave,
     Lyrics,
     Move,

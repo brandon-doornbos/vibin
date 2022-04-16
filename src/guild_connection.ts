@@ -73,6 +73,7 @@ export class GuildConnection {
             .setDescription(`
                 **clear** - Clear the queue
                 **help** - Show this menu
+                **join** - Join the voice channel without playing anything
                 **leave** - Make me leave the voice channel :(
                 **lyrics** - Request the lyrics of a track or the currently playing one
                 **move** - Move a track from one position to another
@@ -86,6 +87,31 @@ export class GuildConnection {
                 **shuffle** - Shuffle the queue
             `)
             .setFooter({ text: `Use ${this.prefix} with a command or @ me` })];
+    }
+
+    async command_join(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+        const voice_channel = message.member?.voice.channel;
+        if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
+            this.request_voice_connection(voice_channel);
+        } else {
+            return [new Discord.MessageEmbed()
+                .setColor("#FF0000")
+                .setDescription("Please join a voice channel.")];
+        }
+
+        if (this.audio_connection) {
+            if (!this.audio_connection.check_voice_channel(message)) {
+                return [new Discord.MessageEmbed()
+                    .setColor("#FF0000")
+                    .setDescription("I'm already in a voice channel!")];
+            }
+
+            return [new Discord.MessageEmbed()
+                .setColor("#00FF00")
+                .setDescription("Joined channel!")];
+        }
+
+        return [new Discord.MessageEmbed()];
     }
 
     async command_leave(message: Discord.Message): Promise<Discord.MessageEmbed[]> {

@@ -236,10 +236,11 @@ export class AudioConnection {
         return embed;
     }
 
-    async play(url: string) {
+    async play(args: string[]) {
         const embed = new Discord.MessageEmbed();
 
         try {
+            const url = args[0];
             if (YTPL.validateID(url)) {
                 const playlist = await YTPL(url, { limit: Infinity });
                 let duration = 0;
@@ -265,7 +266,8 @@ export class AudioConnection {
                 embed.addField("Added track", `[${track.title}](${url})`);
                 embed.addField("Length", seconds_to_hms(track.length));
             } else {
-                const filters = await YTSR.getFilters(url);
+                const searchTerm = args.join(" ");
+                const filters = await YTSR.getFilters(searchTerm);
                 const filter = filters.get("Type")?.get("Video");
                 const results = await YTSR(filter?.url || "", { limit: 1 });
                 const firstResult = results.items[0];

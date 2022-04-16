@@ -4,7 +4,7 @@ import tokens from "./config.json" assert { type: "json" };
 
 // eslint-disable-next-line
 enum Command {
-    // FIXME: Bind,
+    Bind,
     Clear,
     Help,
     Join,

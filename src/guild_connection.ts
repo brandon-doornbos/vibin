@@ -55,6 +55,22 @@ export class GuildConnection {
         this.audio_connection = new AudioConnection(voice_channel, this.text_channel);
     }
 
+    async command_bind(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+        if (message.channel instanceof Discord.TextChannel) {
+            this.text_channel = message.channel;
+            if (this.audio_connection)
+                this.audio_connection.text_channel = message.channel;
+
+            return [new Discord.MessageEmbed()
+                .setColor("GREEN")
+                .setDescription("Bound to text channel!")];
+        }
+
+        return [new Discord.MessageEmbed()
+            .setColor("RED")
+            .setDescription("Failed to bind to text channel!")];
+    }
+
     async command_clear(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -71,6 +87,7 @@ export class GuildConnection {
             .setColor("#0099FF")
             .setTitle("Commands")
             .setDescription(`
+                **bind** - Bind to a text channel
                 **clear** - Clear the queue
                 **help** - Show this menu
                 **join** - Join the voice channel without playing anything

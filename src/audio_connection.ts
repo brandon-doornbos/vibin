@@ -22,6 +22,8 @@ export class AudioConnection {
     private queue: Track[];
     private queue_lock: boolean;
     active_queue_message: Discord.Message | null;
+    loop: boolean;
+    private current_track: Track | undefined;
 
     private now_playing_message: Discord.Message | null;
 
@@ -44,6 +46,8 @@ export class AudioConnection {
         this.queue = [];
         this.queue_lock = false;
         this.active_queue_message = null;
+        this.loop = false;
+        this.current_track = undefined;
 
         this.now_playing_message = null;
 
@@ -130,6 +134,13 @@ export class AudioConnection {
             if (this.now_playing_message) {
                 this.now_playing_message.delete();
                 this.now_playing_message = null;
+            }
+
+            if (this.loop) {
+                this.current_track?.create_audio_resource().then((resource) => {
+                    this.audio_player.play(resource);
+                    return;
+                });
             }
 
             void this.process_queue();
@@ -463,9 +474,9 @@ export class AudioConnection {
 
         this.queue_lock = true;
 
-        const next_track = this.queue.shift();
+        this.current_track = this.queue.shift();
         // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
-        next_track?.create_audio_resource().then((resource) => {
+        this.current_track?.create_audio_resource().then((resource) => {
             this.audio_player.play(resource);
             this.queue_lock = false;
         }).catch((error) => {
@@ -477,10 +488,12 @@ export class AudioConnection {
                 .addField("Error", error.message);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
-            if (retry_count < 5)
-                this.queue.unshift(next_track);
-            else
+            if (retry_count < 5) {
+                // @ts-ignore: TypeScript needs to step up their static analysis, this cannot be undefined
+                this.queue.unshift(this.current_track);
+            } else {
                 retry_count = -1;
+            }
 
             this.queue_lock = false;
             return this.process_queue(retry_count + 1);

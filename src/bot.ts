@@ -9,6 +9,7 @@ enum Command {
     Help,
     Join,
     Leave,
+    Loop,
     Lyrics,
     Move,
     Pause,

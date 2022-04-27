@@ -92,6 +92,7 @@ export class GuildConnection {
                 **help** - Show this menu
                 **join** - Join the voice channel without playing anything
                 **leave** - Make me leave the voice channel :(
+                **loop** - Toggle looping the current track
                 **lyrics** - Request the lyrics of a track or the currently playing one
                 **move** - Move a track from one position to another
                 **pause** - Pause music playback
@@ -143,6 +144,25 @@ export class GuildConnection {
 
             embed.setColor("RED");
             embed.setDescription("bai 👋🏻");
+        }
+
+        return [embed];
+    }
+
+    async command_loop(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+        const embed = new Discord.MessageEmbed();
+
+        if (this.audio_connection) {
+            if (!this.audio_connection.check_voice_channel(message))
+                return [this.audio_connection.wrong_voice_channel()];
+
+            this.audio_connection.loop = !this.audio_connection.loop;
+
+            embed.setColor("BLUE");
+            if (this.audio_connection.loop)
+                embed.setDescription("Now looping the current track");
+            else
+                embed.setDescription("Stopped looping the current track");
         }
 
         return [embed];

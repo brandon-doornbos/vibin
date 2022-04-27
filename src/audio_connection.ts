@@ -1,5 +1,6 @@
 import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
+import * as ChildProcess from "child_process";
 import * as Util from "util";
 import { default as YTPL } from "ytpl";
 import { default as YTDL } from "ytdl-core";
@@ -241,7 +242,12 @@ export class AudioConnection {
 
         try {
             const url = args[0];
-            if (YTPL.validateID(url)) {
+            if (url.includes("&list=RD")) {
+                embed.setColor("BLUE");
+                embed.setDescription("Processing YouTube Mix⏳");
+
+                this.add_youtube_mix(url);
+            } else if (YTPL.validateID(url)) {
                 const playlist = await YTPL(url, { limit: Infinity });
                 let duration = 0;
                 for (const item of playlist.items) {
@@ -291,6 +297,49 @@ export class AudioConnection {
         }
 
         return embed;
+    }
+
+    async add_youtube_mix(url: string) {
+        ChildProcess.execFile("yt-dlp", [
+            "--quiet",
+            "--print", "%(id)s %(duration)i %(title)s",
+            "--flat-playlist",
+            "--no-check-certificates",
+            "--no-cache-dir",
+            "--no-call-home",
+            url,
+        ], (error, stdout) => {
+            const embed = new Discord.MessageEmbed();
+            if (error) {
+                console.error(error);
+                embed.setColor("RED");
+                embed.setDescription("Could not add Mix");
+                this.text_channel.send({ embeds: [embed] });
+                return;
+            }
+
+            let count = 0;
+            let duration = 0;
+
+            const lines = stdout.trim().split("\n");
+            for (const line of lines) {
+                const parts = line.split(" ");
+                const new_url = parts.shift() || "";
+                const new_duration = parseInt(parts.shift() || "0");
+                const title = parts.join(" ");
+                const track = new Track(new_url, title, new_duration);
+                this.enqueue(track);
+
+                count += 1;
+                duration += new_duration;
+            }
+
+            embed.setColor("GREEN");
+            embed.setTitle("Added Mix");
+            embed.addField("Length", seconds_to_hms(duration), true);
+            embed.addField("Tracks", count.toString(), true);
+            this.text_channel.send({ embeds: [embed] });
+        });
     }
 
     skip(amount: string) {

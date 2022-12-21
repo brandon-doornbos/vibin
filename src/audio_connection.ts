@@ -54,17 +54,15 @@ export class AudioConnection {
         this.ready_lock = false;
         this.destroyed = false;
 
-        // @ts-ignore: For some reason TypeScript won't accept this valid argument
         this.voice_connection.on("stateChange", (_, new_state) => this.voice_state_change(new_state));
 
-        // @ts-ignore: For some reason TypeScript won't accept this valid argument
         this.audio_player.on("stateChange", (old_state, new_state) => this.player_state_change(old_state, new_state));
         this.audio_player.on("error", (error: { message: string; name: string; resource: DiscordVoice.AudioResource; }) => {
             console.warn(error);
 
-            const embed = new Discord.MessageEmbed()
-                .setColor("RED")
-                .addField("Error", error.message);
+            const embed = new Discord.EmbedBuilder()
+                .setColor("Red")
+                .addFields([{ name: "Error", value: error.message }]);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
         });
 
@@ -146,10 +144,10 @@ export class AudioConnection {
             void this.process_queue();
         } else if (new_state.status === DiscordVoice.AudioPlayerStatus.Playing) {
             // entered playing state, started next track
-            const embed = new Discord.MessageEmbed()
-                .setColor("BLUE")
+            const embed = new Discord.EmbedBuilder()
+                .setColor("Blue")
                 // @ts-ignore: No TypeScript, this cannot be null
-                .addField("Now playing", this.now_playing_resource().metadata.title);
+                .addFields([{ name: "Now playing", value: this.now_playing_resource().metadata.title }]);
 
             if (this.now_playing_message) {
                 this.now_playing_message.delete();
@@ -196,8 +194,8 @@ export class AudioConnection {
     }
 
     wrong_voice_channel() {
-        return new Discord.MessageEmbed()
-            .setColor("RED")
+        return new Discord.EmbedBuilder()
+            .setColor("Red")
             .setDescription("Please join the corrent voice channel.");
     }
 
@@ -209,7 +207,7 @@ export class AudioConnection {
     }
 
     move(source: string, target: string) {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
 
         const from = string_to_index(source, this.queue.length);
         const to = string_to_index(target, this.queue.length);
@@ -219,7 +217,7 @@ export class AudioConnection {
             && (from >= 0 && from < this.queue.length)
             && (to >= 0 && to < this.queue.length)
         ) {
-            embed.setColor("GREEN");
+            embed.setColor("Green");
             embed.setDescription(`Moved *${this.queue[from].title}* to index ${to}`);
 
             for (let i = from; i > to; i -= 1) {
@@ -228,7 +226,7 @@ export class AudioConnection {
                 this.queue[i] = temp;
             }
         } else {
-            embed.setColor("RED");
+            embed.setColor("Red");
             embed.setDescription("Incorrect index or indices");
         }
 
@@ -236,12 +234,12 @@ export class AudioConnection {
     }
 
     pause() {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
 
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.pause();
 
-            embed.setColor("GREEN");
+            embed.setColor("Green");
             embed.setDescription("Paused");
         }
 
@@ -249,12 +247,12 @@ export class AudioConnection {
     }
 
     async play(args: string[]) {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
 
         try {
             const url = args[0];
             if (url.includes("&list=RD")) {
-                embed.setColor("BLUE");
+                embed.setColor("Blue");
                 embed.setDescription("Processing YouTube Mix⏳");
 
                 this.add_youtube_mix(url);
@@ -267,21 +265,25 @@ export class AudioConnection {
                     duration += item.durationSec || 0;
                 }
 
-                embed.setColor("GREEN");
+                embed.setColor("Green");
                 embed.setThumbnail(playlist.thumbnails[0].url || "");
-                embed.addField("Added playlist", `[${playlist.title}](${playlist.url})`);
-                embed.addField("Length", seconds_to_hms(duration), true);
-                embed.addField("Tracks", playlist.items.length.toString(), true);
+                embed.addFields([
+                    { name: "Added playlist", value: `[${playlist.title}](${playlist.url})` },
+                    { name: "Length", value: seconds_to_hms(duration) },
+                    { name: "Tracks", value: playlist.items.length.toString() }
+                ]);
             } else if (YTDL.validateURL(url)) {
                 const info = await YTDL.getInfo(url);
                 const video = info.videoDetails;
                 const track = new Track(url, video.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed.setColor("GREEN");
+                embed.setColor("Green");
                 embed.setThumbnail(video.thumbnails[0].url);
-                embed.addField("Added track", `[${track.title}](${url})`);
-                embed.addField("Length", seconds_to_hms(track.length));
+                embed.addFields([
+                    { name: "Added track", value: `[${track.title}](${url})` },
+                    { name: "Length", value: seconds_to_hms(track.length) }
+                ]);
             } else {
                 const searchTerm = args.join(" ");
                 const filters = await YTSR.getFilters(searchTerm);
@@ -295,15 +297,17 @@ export class AudioConnection {
                 const track = new Track(firstResult.url, firstResult.title, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
-                embed.setColor("GREEN");
+                embed.setColor("Green");
                 embed.setThumbnail(video.thumbnails[0].url);
-                embed.addField("Added track", `[${track.title}](${firstResult.url})`);
-                embed.addField("Length", seconds_to_hms(track.length));
+                embed.addFields([
+                    { name: "Added track", value: `[${track.title}](${firstResult.url})` },
+                    { name: "Length", value: seconds_to_hms(track.length) }
+                ]);
             }
         } catch (error) {
             console.warn(error);
-            return new Discord.MessageEmbed()
-                .setColor("RED")
+            return new Discord.EmbedBuilder()
+                .setColor("Red")
                 .setDescription("Failed to play track.");
         }
 
@@ -320,10 +324,10 @@ export class AudioConnection {
             "--no-call-home",
             url,
         ], (error, stdout) => {
-            const embed = new Discord.MessageEmbed();
+            const embed = new Discord.EmbedBuilder();
             if (error) {
                 console.error(error);
-                embed.setColor("RED");
+                embed.setColor("Red");
                 embed.setDescription("Could not add Mix");
                 this.text_channel.send({ embeds: [embed] });
                 return;
@@ -345,16 +349,18 @@ export class AudioConnection {
                 duration += new_duration;
             }
 
-            embed.setColor("GREEN");
+            embed.setColor("Green");
             embed.setTitle("Added Mix");
-            embed.addField("Length", seconds_to_hms(duration), true);
-            embed.addField("Tracks", count.toString(), true);
+            embed.addFields([
+                { name: "Length", value: seconds_to_hms(duration) },
+                { name: "Tracks", value: count.toString() }
+            ]);
             this.text_channel.send({ embeds: [embed] });
         });
     }
 
     skip(amount: string) {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
 
         const resource = this.now_playing_resource();
         if (!resource)
@@ -367,41 +373,41 @@ export class AudioConnection {
 
             this.queue.splice(0, amount_num);
 
-            embed.addField("Skipped", `${resource.metadata.title} and the next ${amount_num - 1} tracks.`);
+            embed.addFields([{ name: "Skipped", value: `${resource.metadata.title} and the next ${amount_num - 1} tracks.` }]);
         } else {
-            embed.addField("Skipped", resource.metadata.title);
+            embed.addFields([{ name: "Skipped", value: resource.metadata.title }]);
         }
 
         this.audio_player.stop();
-        embed.setColor("GREEN");
+        embed.setColor("Green");
 
         return embed;
     }
 
     remove(index: string) {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
         const idx = string_to_index(index, this.queue.length);
 
         if (idx >= 0 && idx < this.queue.length) {
-            embed.setColor("GREEN");
-            embed.addField("Removed track", this.queue[idx].title);
+            embed.setColor("Green");
+            embed.addFields([{ name: "Removed track", value: this.queue[idx].title }]);
 
             this.queue.splice(idx, 1);
         } else {
-            embed.setColor("RED");
-            embed.addField("Incorrect index", "😭");
+            embed.setColor("Red");
+            embed.addFields([{ name: "Incorrect index", value: "😭" }]);
         }
 
         return embed;
     }
 
     resume() {
-        const embed = new Discord.MessageEmbed();
+        const embed = new Discord.EmbedBuilder();
 
         if (this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle) {
             this.audio_player.unpause();
 
-            embed.setColor("GREEN");
+            embed.setColor("Green");
             embed.setDescription("Resumed");
         }
 
@@ -411,8 +417,8 @@ export class AudioConnection {
     shuffle() {
         shuffle(this.queue);
 
-        return new Discord.MessageEmbed()
-            .setColor("GREEN")
+        return new Discord.EmbedBuilder()
+            .setColor("Green")
             .setDescription("Shuffled queue");
     }
 
@@ -457,8 +463,8 @@ export class AudioConnection {
     clear_queue() {
         this.queue = [];
 
-        return new Discord.MessageEmbed()
-            .setColor("GREEN")
+        return new Discord.EmbedBuilder()
+            .setColor("Green")
             .setDescription("Cleared queue");
     }
 
@@ -483,9 +489,9 @@ export class AudioConnection {
             // If an error occurred, try the next item of the queue instead
             console.warn(error);
 
-            const embed = new Discord.MessageEmbed()
-                .setColor("RED")
-                .addField("Error", error.message);
+            const embed = new Discord.EmbedBuilder()
+                .setColor("Red")
+                .addFields([{ name: "Error", value: error.message }]);
             this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
             if (retry_count < 5) {

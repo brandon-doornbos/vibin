@@ -45,10 +45,11 @@ export class Bot {
 
         this.client = new Discord.Client({
             intents: [
-                Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-                Discord.Intents.FLAGS.GUILD_MESSAGES,
-                Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-                Discord.Intents.FLAGS.GUILDS,
+                Discord.GatewayIntentBits.GuildVoiceStates,
+                Discord.GatewayIntentBits.GuildMessages,
+                Discord.GatewayIntentBits.GuildMessageReactions,
+                Discord.GatewayIntentBits.Guilds,
+                Discord.GatewayIntentBits.MessageContent,
             ],
         });
 
@@ -65,7 +66,7 @@ export class Bot {
             return;
 
         console.log(`${user.tag} ready!`);
-        user.setPresence({ activities: [{ type: "LISTENING", name: `@${user.username} help` }] });
+        user.setPresence({ activities: [{ type: Discord.ActivityType.Listening, name: `@${user.username} help` }] });
     }
 
     private build_command_cache(): Map<string, Command> {
@@ -116,8 +117,8 @@ export class Bot {
         // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
         const embeds = await connection[`command_${command}`](message, parsed_message.args);
         for (const embed of embeds) {
-            if (!embed.description && embed.fields.length <= 0) {
-                embed.setColor("RED");
+            if (!embed.data.description && embed.data.fields.length <= 0) {
+                embed.setColor("Red");
                 embed.setDescription("Not currently playing.");
             }
             const result = await message.reply({ embeds: [embed] });

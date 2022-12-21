@@ -55,23 +55,23 @@ export class GuildConnection {
         this.audio_connection = new AudioConnection(voice_channel, this.text_channel);
     }
 
-    async command_bind(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_bind(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (message.channel instanceof Discord.TextChannel) {
             this.text_channel = message.channel;
             if (this.audio_connection)
                 this.audio_connection.text_channel = message.channel;
 
-            return [new Discord.MessageEmbed()
-                .setColor("GREEN")
+            return [new Discord.EmbedBuilder()
+                .setColor("Green")
                 .setDescription("Bound to text channel!")];
         }
 
-        return [new Discord.MessageEmbed()
-            .setColor("RED")
+        return [new Discord.EmbedBuilder()
+            .setColor("Red")
             .setDescription("Failed to bind to text channel!")];
     }
 
-    async command_clear(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_clear(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -79,12 +79,12 @@ export class GuildConnection {
             return [this.audio_connection.clear_queue()];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_help(): Promise<Discord.MessageEmbed[]> {
-        return [new Discord.MessageEmbed()
-            .setColor("BLUE")
+    async command_help(): Promise<Discord.EmbedBuilder[]> {
+        return [new Discord.EmbedBuilder()
+            .setColor("Blue")
             .setTitle("Commands")
             .setDescription(`
                 **bind** - Bind to a text channel
@@ -107,33 +107,33 @@ export class GuildConnection {
             .setFooter({ text: `Use ${this.prefix} with a command or @ me` })];
     }
 
-    async command_join(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_join(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         const voice_channel = message.member?.voice.channel;
         if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
             this.request_voice_connection(voice_channel);
         } else {
-            return [new Discord.MessageEmbed()
-                .setColor("RED")
+            return [new Discord.EmbedBuilder()
+                .setColor("Red")
                 .setDescription("Please join a voice channel.")];
         }
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message)) {
-                return [new Discord.MessageEmbed()
-                    .setColor("RED")
+                return [new Discord.EmbedBuilder()
+                    .setColor("Red")
                     .setDescription("I'm already in a voice channel!")];
             }
 
-            return [new Discord.MessageEmbed()
-                .setColor("GREEN")
+            return [new Discord.EmbedBuilder()
+                .setColor("Green")
                 .setDescription("Joined channel!")];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_leave(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
-        const embed = new Discord.MessageEmbed();
+    async command_leave(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
+        const embed = new Discord.EmbedBuilder();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -142,15 +142,15 @@ export class GuildConnection {
             this.audio_connection.destroy();
             this.audio_connection = null;
 
-            embed.setColor("RED");
+            embed.setColor("Red");
             embed.setDescription("bai 👋🏻");
         }
 
         return [embed];
     }
 
-    async command_loop(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
-        const embed = new Discord.MessageEmbed();
+    async command_loop(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
+        const embed = new Discord.EmbedBuilder();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -158,7 +158,7 @@ export class GuildConnection {
 
             this.audio_connection.loop = !this.audio_connection.loop;
 
-            embed.setColor("BLUE");
+            embed.setColor("Blue");
             if (this.audio_connection.loop)
                 embed.setDescription("Now looping the current track");
             else
@@ -168,8 +168,8 @@ export class GuildConnection {
         return [embed];
     }
 
-    async command_lyrics(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
-        const embeds = [new Discord.MessageEmbed()];
+    async command_lyrics(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
+        const embeds = [new Discord.EmbedBuilder()];
 
         let title;
         if (args.length > 0) {
@@ -191,12 +191,12 @@ export class GuildConnection {
         const lyrics = await find_lyrics(title);
         if (lyrics instanceof Error) {
             console.error(lyrics);
-            embeds[0].setColor("RED");
+            embeds[0].setColor("Red");
             embeds[0].setDescription(lyrics.message);
             return embeds;
         }
 
-        embeds[0].setColor("BLUE");
+        embeds[0].setColor("Blue");
         embeds[0].setTitle("Lyrics");
 
         const embed_threshold = 5800;
@@ -207,9 +207,9 @@ export class GuildConnection {
             while (lyric_content.length > embed_threshold) {
                 for (let i = embed_threshold; i >= 0; i -= 1) {
                     if (lyric_content[i] === "\n" && lyric_content.slice(0, i).trim() !== "") {
-                        embeds[embeds.length - 1].setColor("BLUE");
+                        embeds[embeds.length - 1].setColor("Blue");
                         embeds[embeds.length - 1].setDescription(lyric_content.slice(0, i));
-                        embeds.push(new Discord.MessageEmbed());
+                        embeds.push(new Discord.EmbedBuilder());
                         lyric_content = lyric_content.slice(i);
                     }
                 }
@@ -221,7 +221,7 @@ export class GuildConnection {
         return embeds;
     }
 
-    async command_move(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
+    async command_move(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -229,10 +229,10 @@ export class GuildConnection {
             return [this.audio_connection.move(args[0], args[1])];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_pause(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_pause(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -240,16 +240,16 @@ export class GuildConnection {
             return [this.audio_connection.pause()];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_play(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
+    async command_play(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         const voice_channel = message.member?.voice.channel;
         if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
             this.request_voice_connection(voice_channel);
         } else {
-            return [new Discord.MessageEmbed()
-                .setColor("RED")
+            return [new Discord.EmbedBuilder()
+                .setColor("Red")
                 .setDescription("Please join a voice channel.")];
         }
 
@@ -262,19 +262,19 @@ export class GuildConnection {
                 return [result];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
+    async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         this.update_prefix(args[0]);
 
-        return [new Discord.MessageEmbed()
-            .setColor("GREEN")
+        return [new Discord.EmbedBuilder()
+            .setColor("Green")
             .setDescription(`Prefix changed to: ${this.prefix}`)];
     }
 
-    async command_queue(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
-        const embed = new Discord.MessageEmbed();
+    async command_queue(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
+        const embed = new Discord.EmbedBuilder();
 
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
@@ -284,13 +284,13 @@ export class GuildConnection {
             const queue_obj = this.audio_connection.stringify_queue(page);
             const now_playing = this.audio_connection.now_playing();
 
-            embed.setColor("BLUE");
+            embed.setColor("Blue");
             if (now_playing) {
                 embed.setTitle("Now Playing");
                 embed.setDescription(now_playing);
 
                 if (queue_obj) {
-                    embed.addField("Coming up", queue_obj.queue);
+                    embed.addFields([{ name: "Coming up", value: queue_obj.queue }]);
                     embed.setFooter({ text: `Page ${queue_obj.page + 1} / ${queue_obj.pages}` });
                 }
             } else if (queue_obj) {
@@ -358,7 +358,7 @@ export class GuildConnection {
             message.react(emoji);
     }
 
-    async command_skip(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
+    async command_skip(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -366,10 +366,10 @@ export class GuildConnection {
             return [this.audio_connection.skip(args[0])];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_remove(message: Discord.Message, args: string[]): Promise<Discord.MessageEmbed[]> {
+    async command_remove(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -377,10 +377,10 @@ export class GuildConnection {
             return [this.audio_connection.remove(args[0])];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_resume(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_resume(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -388,10 +388,10 @@ export class GuildConnection {
             return [this.audio_connection.resume()];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_shuffle(message: Discord.Message): Promise<Discord.MessageEmbed[]> {
+    async command_shuffle(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (this.audio_connection) {
             if (!this.audio_connection.check_voice_channel(message))
                 return [this.audio_connection.wrong_voice_channel()];
@@ -399,12 +399,12 @@ export class GuildConnection {
             return [this.audio_connection.shuffle()];
         }
 
-        return [new Discord.MessageEmbed()];
+        return [new Discord.EmbedBuilder()];
     }
 
-    async command_unknown(): Promise<Discord.MessageEmbed[]> {
-        return [new Discord.MessageEmbed()
-            .setColor("RED")
+    async command_unknown(): Promise<Discord.EmbedBuilder[]> {
+        return [new Discord.EmbedBuilder()
+            .setColor("Red")
             .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`)];
     }
 }

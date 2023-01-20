@@ -355,7 +355,7 @@ export class GuildConnection {
         });
 
         for (const emoji of emojis.keys())
-            message.react(emoji);
+            message.react(emoji).catch((_) => {});
     }
 
     async command_skip(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {

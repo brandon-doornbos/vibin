@@ -117,7 +117,7 @@ export class Bot {
         // @ts-ignore: This is valid JavaScript but TypeScript could never infer types
         const embeds = await connection[`command_${command}`](message, parsed_message.args);
         for (const embed of embeds) {
-            if (!embed.data.description && embed.data.fields.length <= 0) {
+            if (!embed.data.description && !embed.data.fields) {
                 embed.setColor("Red");
                 embed.setDescription("Not currently playing.");
             }

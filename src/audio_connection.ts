@@ -319,6 +319,7 @@ export class AudioConnection {
             "--quiet",
             "--print", "%(id)s %(duration)i %(title)s",
             "--flat-playlist",
+            "--playlist-items", "1:200",
             "--no-check-certificates",
             "--no-cache-dir",
             "--no-call-home",

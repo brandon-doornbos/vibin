@@ -185,7 +185,7 @@ export class AudioConnection {
             });
 
             for (const emoji of emojis.keys())
-                message.react(emoji).catch((_) => {});
+                message.react(emoji).catch((_) => { });
         }
     }
 

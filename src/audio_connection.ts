@@ -218,7 +218,7 @@ export class AudioConnection {
             && (to >= 0 && to < this.queue.length)
         ) {
             embed.setColor("Green");
-            embed.setDescription(`Moved *${this.queue[from].title}* to index ${to}`);
+            embed.setDescription(`Moved *${this.queue[from].title}* to location ${to + 1}`);
 
             for (let i = from; i > to; i -= 1) {
                 const temp = this.queue[i - 1];

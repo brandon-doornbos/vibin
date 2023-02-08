@@ -86,7 +86,10 @@ export class AudioConnection {
                         this.voice_channel = this.voice_connection.joinConfig.channelId;
                 } catch {
                     this.destroy();
-                    this.text_channel.send("y u kick :(");
+                    const embed = new Discord.EmbedBuilder()
+                        .setColor("Red")
+                        .setDescription("Kicked from the voice channel! :(");
+                    this.text_channel.send({ embeds: [embed] });
                     // Probably removed from voice channel
                 }
             } else if (this.voice_connection.rejoinAttempts < 5) {

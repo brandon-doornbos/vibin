@@ -221,7 +221,7 @@ export class AudioConnection {
     wrong_voice_channel() {
         return new Discord.EmbedBuilder()
             .setColor("Red")
-            .setDescription("Please join the corrent voice channel.");
+            .setDescription("Please join the correct voice channel.");
     }
 
     now_playing_resource() {

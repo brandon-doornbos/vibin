@@ -356,7 +356,7 @@ export class GuildConnection {
     }
 
     command_queue_callback(message: Discord.Message) {
-        if (!this.audio_connection)
+        if (!this.audio_connection || !message.embeds[0].data.title)
             return;
 
         if (this.audio_connection.active_queue_message)

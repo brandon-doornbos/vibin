@@ -6,7 +6,8 @@ import { AudioConnection } from "./audio_connection.js";
 import { Bot } from "./bot.js";
 
 interface GuildConfig {
-    prefix: string
+    prefix: string,
+    mix_items: number
 }
 
 export class GuildConnection {
@@ -16,9 +17,12 @@ export class GuildConnection {
         prefix: {
             type: "string",
             description: "prefix to invoke commands"
+        }, mix_items: {
+            type: "number",
+            description: "amount of items to queue of a YouTube Mix"
         }
     };
-    private static default_config: GuildConfig = { prefix: "$" };
+    private static default_config: GuildConfig = { prefix: "$", mix_items: 100 };
     config: GuildConfig;
 
     private audio_connection: AudioConnection | null;
@@ -56,12 +60,6 @@ export class GuildConnection {
         FS.writeFileSync(`config/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, JSON.stringify(this.config));
     }
 
-    update_text_channel(channel: Discord.TextChannel) {
-        this.text_channel = channel;
-        if (this.audio_connection)
-            this.audio_connection.text_channel = channel;
-    }
-
     async request_voice_connection(voice_channel: Discord.VoiceChannel) {
         if (this.audio_connection && !this.audio_connection.destroyed) {
             DiscordVoice.entersState(this.audio_connection.voice_connection, DiscordVoice.VoiceConnectionStatus.Ready, 20e3)
@@ -72,14 +70,12 @@ export class GuildConnection {
             return;
         }
 
-        this.audio_connection = new AudioConnection(voice_channel, this.text_channel);
+        this.audio_connection = new AudioConnection(voice_channel, this);
     }
 
     async command_bind(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
         if (message.channel instanceof Discord.TextChannel) {
             this.text_channel = message.channel;
-            if (this.audio_connection)
-                this.audio_connection.text_channel = message.channel;
 
             return [new Discord.EmbedBuilder()
                 .setColor("Green")
@@ -297,6 +293,10 @@ export class GuildConnection {
             switch (data.type) {
                 case "string":
                     if (value === "") continue;
+                    break;
+                case "number":
+                    value = parseInt(value);
+                    if (isNaN(value) || value === undefined) continue;
                     break;
                 default:
                     continue;

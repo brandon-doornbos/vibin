@@ -8,11 +8,12 @@ import { default as YTSR } from "ytsr";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
 import { shuffle, seconds_to_hms, string_to_index } from "./utils.js";
+import { GuildConnection } from "./guild_connection.js";
 
 const wait = Util.promisify(setTimeout);
 
 export class AudioConnection {
-    text_channel: Discord.TextChannel;
+    private guild_connection: GuildConnection;
 
     private voice_channel: Discord.Snowflake;
     voice_connection: DiscordVoice.VoiceConnection;
@@ -30,8 +31,8 @@ export class AudioConnection {
     private ready_lock: boolean;
     destroyed: boolean;
 
-    constructor(voice_channel: Discord.VoiceChannel, text_channel: Discord.TextChannel) {
-        this.text_channel = text_channel;
+    constructor(voice_channel: Discord.VoiceChannel, guild_connection: GuildConnection) {
+        this.guild_connection = guild_connection;
 
         this.voice_channel = voice_channel.id;
         this.voice_connection = DiscordVoice.joinVoiceChannel({
@@ -63,7 +64,7 @@ export class AudioConnection {
             const embed = new Discord.EmbedBuilder()
                 .setColor("Red")
                 .addFields([{ name: "Error", value: error.message }]);
-            this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
+            this.guild_connection.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
         });
 
         this.voice_connection.subscribe(this.audio_player);
@@ -89,7 +90,7 @@ export class AudioConnection {
                     const embed = new Discord.EmbedBuilder()
                         .setColor("Red")
                         .setDescription("Kicked from the voice channel! :(");
-                    this.text_channel.send({ embeds: [embed] });
+                    this.guild_connection.text_channel.send({ embeds: [embed] });
                     // Probably removed from voice channel
                 }
             } else if (this.voice_connection.rejoinAttempts < 5) {
@@ -157,7 +158,7 @@ export class AudioConnection {
                 this.now_playing_message = null;
             }
 
-            const message = await this.text_channel.send({ embeds: [embed] });
+            const message = await this.guild_connection.text_channel.send({ embeds: [embed] });
             this.now_playing_message = message;
 
             const emojis: Map<string, string> = new Map([
@@ -322,7 +323,7 @@ export class AudioConnection {
             "--quiet",
             "--print", "%(id)s %(duration)i %(title)s",
             "--flat-playlist",
-            "--playlist-items", "1:200",
+            "--playlist-items", `1:${this.guild_connection.config.mix_items}`,
             "--no-check-certificates",
             "--no-cache-dir",
             "--no-call-home",
@@ -333,7 +334,7 @@ export class AudioConnection {
                 console.error(error);
                 embed.setColor("Red");
                 embed.setDescription("Could not add Mix");
-                this.text_channel.send({ embeds: [embed] });
+                this.guild_connection.text_channel.send({ embeds: [embed] });
                 return;
             }
 
@@ -359,7 +360,7 @@ export class AudioConnection {
                 { name: "Length", value: seconds_to_hms(duration) },
                 { name: "Tracks", value: count.toString() }
             ]);
-            this.text_channel.send({ embeds: [embed] });
+            this.guild_connection.text_channel.send({ embeds: [embed] });
         });
     }
 
@@ -496,7 +497,7 @@ export class AudioConnection {
             const embed = new Discord.EmbedBuilder()
                 .setColor("Red")
                 .addFields([{ name: "Error", value: error.message }]);
-            this.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
+            this.guild_connection.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
             if (retry_count < 5) {
                 // @ts-ignore: TypeScript needs to step up their static analysis, this cannot be undefined

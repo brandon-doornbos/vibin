@@ -5,35 +5,55 @@ import { find_lyrics } from "./lyrics.js";
 import { AudioConnection } from "./audio_connection.js";
 import { Bot } from "./bot.js";
 
+interface GuildConfig {
+    prefix: string
+}
+
 export class GuildConnection {
     text_channel: Discord.TextChannel;
-    prefix: string;
+
+    private static config_options = {
+        prefix: {
+            type: "string",
+            description: "prefix to invoke commands"
+        }
+    };
+    private static default_config: GuildConfig = { prefix: "$" };
+    config: GuildConfig;
 
     private audio_connection: AudioConnection | null;
 
     constructor(text_channel: Discord.TextChannel) {
         this.text_channel = text_channel;
-        this.prefix = this.get_prefix();
+        this.config = this.get_config();
 
         this.audio_connection = null;
     }
 
-    get_prefix() {
+    get_config() {
+        let options = structuredClone(GuildConnection.default_config);
         try {
-            return FS.readFileSync(`prefixes/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, "utf8").trim();
-        } catch {
-            return "$";
-        }
+            const saved_options = JSON.parse(FS.readFileSync(`config/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, "utf8"));
+            for (const [option, value] of Object.entries(saved_options)) {
+                saved_options[option] = {
+                    value,
+                    configurable: true,
+                    enumerable: true,
+                    writable: true
+                };
+            }
+            Object.defineProperties(options, saved_options);
+        } catch (_) { };
+        return options;
     }
 
-    update_prefix(new_prefix: string) {
-        this.prefix = new_prefix;
+    set_config() {
         try {
-            FS.accessSync(`prefixes/${Bot.the().client.user?.id}`);
+            FS.accessSync(`config/${Bot.the().client.user?.id}`);
         } catch {
-            FS.mkdirSync(`prefixes/${Bot.the().client.user?.id}`);
+            FS.mkdirSync(`config/${Bot.the().client.user?.id}`);
         }
-        FS.writeFileSync(`prefixes/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, this.prefix);
+        FS.writeFileSync(`config/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, JSON.stringify(this.config));
     }
 
     update_text_channel(channel: Discord.TextChannel) {
@@ -97,14 +117,14 @@ export class GuildConnection {
                 **move** - Move a track from one position to another
                 **pause** - Pause music playback
                 **play** - Add a YouTube video or playlist to the queue or search for one
-                **prefix** - Change the prefix
+                **config** - Configure bot, invoke to see options
                 **queue** - Show the tracks in the queue
                 **skip** - Skip the current track and optionally more
                 **remove** - Remove a track from the queue
                 **resume** - Resume paused music playback
                 **shuffle** - Shuffle the queue
             `)
-            .setFooter({ text: `Use ${this.prefix} with a command or @ me` })];
+            .setFooter({ text: `Use ${this.config.prefix} with a command or @ me` })];
     }
 
     async command_join(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
@@ -265,12 +285,40 @@ export class GuildConnection {
         return [new Discord.EmbedBuilder()];
     }
 
-    async command_prefix(_message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
-        this.update_prefix(args[0]);
+    async command_config(_message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
+        const embed = new Discord.EmbedBuilder()
+            .setColor("Green");
 
-        return [new Discord.EmbedBuilder()
-            .setColor("Green")
-            .setDescription(`Prefix changed to: ${this.prefix}`)];
+        for (const [option, data] of Object.entries(GuildConnection.config_options)) {
+            if (option !== args[0])
+                continue;
+
+            let value: any = args[1];
+            switch (data.type) {
+                case "string":
+                    if (value === "") continue;
+                    break;
+                default:
+                    continue;
+            }
+            // @ts-ignore: This always works, because option is indexed from config_options
+            this.config[option] = value;
+            this.set_config();
+            // @ts-ignore: This always works, because option is indexed from config_options
+            embed.setDescription(`Updated ${option} to: ${this.config[option]}.`);
+            return [embed];
+        }
+
+        let config_options = ``;
+        for (const [option, data] of Object.entries(GuildConnection.config_options)) {
+            // @ts-ignore: This always works, because option is indexed from config_options
+            config_options += `**${option}**: *${data.type}* - ${data.description} (currently: ${this.config[option]}, default: ${GuildConnection.default_config[option]})\n`;
+        }
+        return [embed
+            .setColor("Blue")
+            .setTitle("Configuration")
+            .setDescription(config_options)
+            .setFooter({ text: `For example: config prefix %` })];
     }
 
     async command_queue(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
@@ -405,6 +453,6 @@ export class GuildConnection {
     async command_unknown(): Promise<Discord.EmbedBuilder[]> {
         return [new Discord.EmbedBuilder()
             .setColor("Red")
-            .setDescription(`Unknown command, use \`${this.prefix}help\` for a list of commands.`)];
+            .setDescription(`Unknown command, use \`${this.config.prefix}help\` for a list of commands.`)];
     }
 }

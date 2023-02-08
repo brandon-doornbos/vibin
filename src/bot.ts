@@ -14,7 +14,7 @@ enum Command {
     Move,
     Pause,
     Play,
-    Prefix,
+    Config,
     Queue,
     // FIXME: Seek,
     Skip,
@@ -105,9 +105,9 @@ export class Bot {
             content = message.content.split(">").slice(1).join(">");
             if (content[0] === " ") content = content.slice(1);
         } else {
-            if (message.content.slice(0, connection.prefix.length) !== connection.prefix)
+            if (message.content.slice(0, connection.config.prefix.length) !== connection.config.prefix)
                 return;
-            content = message.content.slice(connection.prefix.length);
+            content = message.content.slice(connection.config.prefix.length);
         }
 
         connection.update_text_channel(message.channel);

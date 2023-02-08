@@ -1,5 +1,5 @@
 package-lock.json
 node_modules
 src/config.json
-prefixes
+config
 dist

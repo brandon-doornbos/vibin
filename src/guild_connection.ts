@@ -7,7 +7,8 @@ import { Bot } from "./bot.js";
 
 interface GuildConfig {
     prefix: string,
-    mix_items: number
+    mix_items: number,
+    leave_delay: number
 }
 
 export class GuildConnection {
@@ -20,9 +21,12 @@ export class GuildConnection {
         }, mix_items: {
             type: "number",
             description: "amount of items to queue of a YouTube Mix"
+        }, leave_delay: {
+            type: "number",
+            description: "amount of minutes to wait before leaving if the voice channel is empty"
         }
     };
-    private static default_config: GuildConfig = { prefix: "$", mix_items: 100 };
+    private static default_config: GuildConfig = { prefix: "$", mix_items: 100, leave_delay: 5 };
     config: GuildConfig;
 
     private audio_connection: AudioConnection | null;

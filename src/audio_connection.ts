@@ -30,6 +30,7 @@ export class AudioConnection {
 
     private ready_lock: boolean;
     destroyed: boolean;
+    private leave_timer: NodeJS.Timeout | undefined;
 
     constructor(voice_channel: Discord.VoiceChannel, guild_connection: GuildConnection) {
         this.guild_connection = guild_connection;
@@ -55,6 +56,8 @@ export class AudioConnection {
         this.ready_lock = false;
         this.destroyed = false;
 
+        Bot.the().client.on("voiceStateUpdate", (old_state) => this.voice_channel_state_update(old_state));
+
         this.voice_connection.on("stateChange", (_, new_state) => this.voice_state_change(new_state));
 
         this.audio_player.on("stateChange", (old_state, new_state) => this.player_state_change(old_state, new_state));
@@ -68,6 +71,23 @@ export class AudioConnection {
         });
 
         this.voice_connection.subscribe(this.audio_player);
+    }
+
+    async voice_channel_state_update(old_state: Discord.VoiceState) {
+        if (Bot.the().client.user?.id === old_state.member?.user.id)
+            return;
+
+        if (old_state.channel?.members.size === 1) {
+            this.leave_timer = setTimeout(() => {
+                const embed = new Discord.EmbedBuilder()
+                    .setColor("Red")
+                    .setDescription(`Left the voice channel after ${this.guild_connection.config.leave_delay} minutes of inactivity!`);
+                this.guild_connection.text_channel.send({ embeds: [embed] });
+                this.destroy();
+            }, this.guild_connection.config.leave_delay * 60 * 1000);
+        } else {
+            clearTimeout(this.leave_timer);
+        }
     }
 
     async voice_state_change(new_state: DiscordVoice.VoiceConnectionState) {
@@ -110,6 +130,7 @@ export class AudioConnection {
              * Once destroyed, stop the subscription.
              */
             this.stop();
+            Bot.the().client.removeAllListeners("voiceStateUpdate");
         } else if (
             !this.ready_lock &&
             (new_state.status === DiscordVoice.VoiceConnectionStatus.Connecting || new_state.status === DiscordVoice.VoiceConnectionStatus.Signalling)

@@ -399,7 +399,7 @@ export class AudioConnection {
 
             this.queue.splice(0, amount_num);
 
-            embed.addFields([{ name: "Skipped", value: `${resource.metadata.title} and the next ${amount_num - 1} tracks.` }]);
+            embed.addFields([{ name: "Skipped", value: `${resource.metadata.title} and the next ${amount_num} tracks.` }]);
         } else {
             embed.addFields([{ name: "Skipped", value: resource.metadata.title }]);
         }

@@ -392,17 +392,29 @@ export class GuildConnection {
                 page = parseInt(footer[1]);
                 pages = parseInt(footer[3]);
             }
+
+            const edit = async (page: string) => {
+                const embed = (await this.command_queue(message, [page]))[0];
+
+                if (!embed.data.description) {
+                    embed.setColor("Red");
+                    embed.setDescription("Not currently playing.");
+                }
+
+                message.edit({ embeds: [embed] });
+            }
+
             switch (emojis.get(reaction.emoji.name)) {
-                case "first": message.edit({ embeds: [(await this.command_queue(message, ["1"]))[0]] }); break;
-                case "previous": message.edit({ embeds: [(await this.command_queue(message, [page ? (page - 1).toString() : "1"]))[0]] }); break;
-                case "next": message.edit({ embeds: [(await this.command_queue(message, [page ? (page + 1).toString() : "1"]))[0]] }); break;
-                case "last": message.edit({ embeds: [(await this.command_queue(message, [pages ? pages.toString() : "1"]))[0]] }); break;
+                case "first": edit("1"); break;
+                case "previous": edit(page ? (page - 1).toString() : "1"); break;
+                case "next": edit(page ? (page + 1).toString() : "1"); break;
+                case "last": edit(pages ? pages.toString() : "1"); break;
                 case "shuffle":
                     if (this.audio_connection)
                         this.audio_connection.shuffle();
-                    message.edit({ embeds: [(await this.command_queue(message, [page ? page.toString() : "1"]))[0]] });
+                    edit(page ? page.toString() : "1");
                     break;
-                case "refresh": message.edit({ embeds: [(await this.command_queue(message, [page ? page.toString() : "1"]))[0]] }); break;
+                case "refresh": edit(page ? page.toString() : "1"); break;
             }
         });
 

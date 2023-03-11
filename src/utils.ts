@@ -23,6 +23,29 @@ export function seconds_to_hms(d: number) {
     return hDisplay + mDisplay + sDisplay;
 }
 
+export function hms_to_seconds(hms: string) {
+    if (!hms)
+        return 0;
+
+    const parts = hms.split(":").reverse();
+    let total_seconds = 0;
+
+    if (parts[2]) {
+        const hours = parseInt(parts[2]);
+        total_seconds += 3600 * Math.max(0, isNaN(hours) ? 0 : hours);
+    }
+    if (parts[1]) {
+        const minutes = parseInt(parts[1]);
+        total_seconds += 60 * Math.max(0, isNaN(minutes) ? 0 : minutes);
+    }
+    if (parts[0]) {
+        const seconds = parseInt(parts[0]);
+        total_seconds += Math.max(0, isNaN(seconds) ? 0 : seconds);
+    }
+
+    return total_seconds;
+}
+
 export function shuffle(array: unknown[]) {
     for (let i = array.length - 1; i >= 0; i--) {
         const j = random_int(i + 1);

@@ -5,16 +5,20 @@ export class Track {
     url: string;
     title: string;
     length: number;
+    start_time: number;
+    process: null | ChildProcess.ChildProcess;
 
     constructor(url: string, title: string, length: number) {
         this.url = url;
         this.title = title;
         this.length = length;
+        this.start_time = 0;
+        this.process = null;
     }
 
-    create_audio_resource(): Promise<DiscordVoice.AudioResource> {
+    create_audio_resource(timestamp = 0): Promise<DiscordVoice.AudioResource> {
         return new Promise((resolve, reject) => {
-            const process = ChildProcess.spawn("yt-dlp", [
+            this.process = ChildProcess.spawn("yt-dlp", [
                 "--output", "-",
                 "--quiet",
                 "--format", "bestaudio",
@@ -24,17 +28,22 @@ export class Track {
                 "--rate-limit", "100K",
                 "--no-cache-dir",
                 "--no-call-home",
-                this.url,
+                "--download-sections", "*" + timestamp + "-inf",
+                "--downloader", "ffmpeg",
+                "--external-downloader-args", "ffmpeg_i:-reconnect 1",
+                "--",
+                this.url
             ], { stdio: [0, "pipe", 0] });
 
-            if (!process.stdout) {
+            if (!this.process.stdout) {
                 reject(new Error("No stdout"));
                 return;
             }
-            const stream = process.stdout;
+            const stream = this.process.stdout;
 
             const onError = (error: Error) => {
-                if (!process.killed) process.kill();
+                if (!this.process?.killed)
+                    this.destroy();
                 stream.resume();
                 reject(error);
             };
@@ -43,5 +52,9 @@ export class Track {
                 .then((probe) => resolve(DiscordVoice.createAudioResource(probe.stream, { metadata: this, inputType: probe.type })))
                 .catch(onError);
         });
+    }
+
+    destroy() {
+        this.process?.kill();
     }
 }

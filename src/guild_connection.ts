@@ -119,6 +119,7 @@ export class GuildConnection {
                 **play** - Add a YouTube video or playlist to the queue or search for one
                 **config** - Configure bot, invoke to see options
                 **queue** - Show the tracks in the queue
+                **seek** - Seek to a specific time in the current track, takes hh:mm:ss (hh:mm: optional)
                 **skip** - Skip the current track and optionally more
                 **remove** - Remove a track from the queue
                 **resume** - Resume paused music playback
@@ -420,6 +421,17 @@ export class GuildConnection {
 
         for (const emoji of emojis.keys())
             message.react(emoji).catch((_) => { });
+    }
+
+    async command_seek(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
+        if (this.audio_connection) {
+            if (!this.audio_connection.check_voice_channel(message))
+                return [this.audio_connection.wrong_voice_channel()];
+
+            return [this.audio_connection.seek(args[0])];
+        }
+
+        return [new Discord.EmbedBuilder()];
     }
 
     async command_skip(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {

@@ -7,7 +7,7 @@ import { default as YTDL } from "ytdl-core";
 import { default as YTSR } from "ytsr";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
-import { shuffle, seconds_to_hms, string_to_index } from "./utils.js";
+import { shuffle, seconds_to_hms, hms_to_seconds, string_to_index } from "./utils.js";
 import { GuildConnection } from "./guild_connection.js";
 
 const wait = Util.promisify(setTimeout);
@@ -440,6 +440,23 @@ export class AudioConnection {
         return embed;
     }
 
+    seek(timestamp: string) {
+        const embed = new Discord.EmbedBuilder();
+
+        if (this.current_track) {
+            const seconds = Math.min(this.current_track.length, hms_to_seconds(timestamp));
+            embed.setColor("Blue");
+            embed.setDescription("Seeking to " + seconds_to_hms(seconds) + ".");
+            this.get_audio_resource(0, seconds);
+            this.current_track.start_time = seconds;
+            return embed;
+        }
+
+        embed.setColor("Red");
+        embed.setDescription("Failed to seek.");
+        return embed;
+    }
+
     shuffle() {
         shuffle(this.queue);
 
@@ -453,7 +470,11 @@ export class AudioConnection {
         if (!resource)
             return null;
 
-        const current_time = seconds_to_hms(Math.floor(resource.playbackDuration / 1000));
+        let current_time_s = Math.floor(resource.playbackDuration / 1000);
+        if (this.current_track)
+            current_time_s += this.current_track.start_time;
+
+        const current_time = seconds_to_hms(current_time_s);
         const total_time = seconds_to_hms(resource.metadata.length);
         return `*${resource.metadata.title}* - ${current_time} / ${total_time}`;
     }
@@ -501,14 +522,29 @@ export class AudioConnection {
     }
 
     async process_queue(retry_count = 0) {
-        if (this.queue_lock || this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle || this.queue.length <= 0)
+        if (this.queue_lock || this.audio_player.state.status !== DiscordVoice.AudioPlayerStatus.Idle)
+            return;
+
+        this.current_track?.destroy();
+        this.current_track = undefined;
+
+        if (this.queue.length <= 0)
             return;
 
         this.queue_lock = true;
 
         this.current_track = this.queue.shift();
         // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
-        this.current_track?.create_audio_resource().then((resource) => {
+        this.get_audio_resource(retry_count);
+    }
+
+    get_audio_resource(retry_count: number, timestamp = 0) {
+        if (!this.current_track)
+            return;
+
+        this.current_track.destroy();
+
+        this.current_track.create_audio_resource(timestamp).then((resource) => {
             this.audio_player.play(resource);
             this.queue_lock = false;
         }).catch((error) => {

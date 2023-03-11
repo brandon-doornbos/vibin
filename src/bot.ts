@@ -16,7 +16,7 @@ enum Command {
     Play,
     Config,
     Queue,
-    // FIXME: Seek,
+    Seek,
     Skip,
     Remove,
     Resume,
@@ -42,6 +42,7 @@ export class Bot {
         this.connections = new Map();
         this.command_cache = this.build_command_cache();
         this.command_cache.set("p", Command.Play);
+        this.command_cache.set("s", Command.Skip);
 
         this.client = new Discord.Client({
             intents: [

@@ -124,6 +124,7 @@ export class GuildConnection {
                 **remove** - Remove a track from the queue
                 **resume** - Resume paused music playback
                 **shuffle** - Shuffle the queue
+                **volume** - Set the volume of the bot, resets on join, takes a number between 0 and 200%
             `)
             .setFooter({ text: `Use ${this.config.prefix} with a command or @ me` })];
     }
@@ -482,5 +483,16 @@ export class GuildConnection {
         return [new Discord.EmbedBuilder()
             .setColor("Red")
             .setDescription(`Unknown command, use \`${this.config.prefix}help\` for a list of commands.`)];
+    }
+
+    async command_volume(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
+        if (this.audio_connection) {
+            if (!this.audio_connection.check_voice_channel(message))
+                return [this.audio_connection.wrong_voice_channel()];
+
+            return [this.audio_connection.set_volume(args[0])];
+        }
+
+        return [new Discord.EmbedBuilder()];
     }
 }

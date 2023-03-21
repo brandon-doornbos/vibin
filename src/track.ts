@@ -16,9 +16,9 @@ export class Track {
         this.process = null;
     }
 
-    create_audio_resource(timestamp = 0): Promise<DiscordVoice.AudioResource> {
+    create_audio_resource(volume = 1, timestamp = 0): Promise<DiscordVoice.AudioResource> {
         return new Promise((resolve, reject) => {
-            this.process = ChildProcess.spawn("yt-dlp", [
+            let args = [
                 "--output", "-",
                 "--quiet",
                 "--format", "bestaudio",
@@ -28,12 +28,20 @@ export class Track {
                 "--rate-limit", "100K",
                 "--no-cache-dir",
                 "--no-call-home",
-                "--download-sections", "*" + timestamp + "-inf",
                 "--downloader", "ffmpeg",
-                "--external-downloader-args", "ffmpeg_i:-reconnect 1",
-                "--",
-                this.url
-            ], { stdio: [0, "pipe", 0] });
+                "--downloader-args", "ffmpeg_i:-reconnect 1",
+            ];
+
+            if (timestamp != 0) {
+                args.push("--download-sections", "*" + timestamp + "-inf");
+            }
+
+            if (volume != 1) {
+                args.push("--downloader-args", "ffmpeg_o:-codec libopus -filter:a volume=" + volume);
+            }
+
+            args.push("--", this.url);
+            this.process = ChildProcess.spawn("yt-dlp", args, { stdio: [0, "pipe", 0] });
 
             if (!this.process.stdout) {
                 reject(new Error("No stdout"));

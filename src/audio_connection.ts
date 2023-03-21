@@ -26,6 +26,8 @@ export class AudioConnection {
     loop: boolean;
     private current_track: Track | undefined;
 
+    private volume: number;
+
     private now_playing_message: Discord.Message | null;
 
     private ready_lock: boolean;
@@ -50,6 +52,8 @@ export class AudioConnection {
         this.active_queue_message = null;
         this.loop = false;
         this.current_track = undefined;
+
+        this.volume = 1;
 
         this.now_playing_message = null;
 
@@ -448,7 +452,6 @@ export class AudioConnection {
             embed.setColor("Blue");
             embed.setDescription("Seeking to " + seconds_to_hms(seconds) + ".");
             this.get_audio_resource(0, seconds);
-            this.current_track.start_time = seconds;
             return embed;
         }
 
@@ -515,6 +518,33 @@ export class AudioConnection {
             .setDescription("Cleared queue");
     }
 
+    set_volume(volume: string) {
+        const embed = new Discord.EmbedBuilder();
+
+        let parsed_volume = parseInt(volume);
+        if (isNaN(parsed_volume) || parsed_volume < 0 || parsed_volume > 200) {
+            embed.setColor("Red");
+            embed.setDescription("Invalid volume, please enter a number between 0 and 200%.");
+            return embed;
+        }
+
+        this.volume = parsed_volume / 100;
+
+        const resource = this.now_playing_resource();
+        if (resource) {
+            let current_time_s = resource.playbackDuration / 1000;
+            if (this.current_track)
+                current_time_s += this.current_track.start_time;
+            this.get_audio_resource(0, current_time_s);
+        } else {
+            this.get_audio_resource(0);
+        }
+
+        embed.setColor("Blue");
+        embed.setDescription("Set volume to: " + parsed_volume + "%");
+        return embed;
+    }
+
     stop() {
         this.queue_lock = true;
         this.queue = [];
@@ -544,7 +574,8 @@ export class AudioConnection {
 
         this.current_track.destroy();
 
-        this.current_track.create_audio_resource(timestamp).then((resource) => {
+        this.current_track.start_time = timestamp;
+        this.current_track.create_audio_resource(this.volume, timestamp).then((resource) => {
             this.audio_player.play(resource);
             this.queue_lock = false;
         }).catch((error) => {

@@ -21,7 +21,8 @@ enum Command {
     Remove,
     Resume,
     Shuffle,
-    Unknown
+    Unknown,
+    Volume,
 }
 
 export class Bot {

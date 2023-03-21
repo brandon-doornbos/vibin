@@ -600,6 +600,9 @@ export class AudioConnection {
     }
 
     destroy() {
+        if (this.destroyed)
+            return;
+
         this.voice_connection.destroy();
         this.destroyed = true;
     }

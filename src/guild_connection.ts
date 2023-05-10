@@ -124,7 +124,7 @@ export class GuildConnection {
                 **remove** - Remove a track from the queue
                 **resume** - Resume paused music playback
                 **shuffle** - Shuffle the queue
-                **volume** - Set the volume of the bot, resets on join, takes a number between 0 and 200%
+                **volume** - Set the volume of the bot, resets on join, takes a number of 0% or higher
             `)
             .setFooter({ text: `Use ${this.config.prefix} with a command or @ me` })];
     }

@@ -522,9 +522,9 @@ export class AudioConnection {
         const embed = new Discord.EmbedBuilder();
 
         let parsed_volume = parseInt(volume);
-        if (isNaN(parsed_volume) || parsed_volume < 0 || parsed_volume > 200) {
+        if (isNaN(parsed_volume) || parsed_volume < 0) {
             embed.setColor("Red");
-            embed.setDescription("Invalid volume, please enter a number between 0 and 200%.");
+            embed.setDescription("Invalid volume, please enter a number of 0% or higher. (Above 200% at your own risk)");
             return embed;
         }
 

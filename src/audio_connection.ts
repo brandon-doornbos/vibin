@@ -3,7 +3,7 @@ import * as DiscordVoice from "@discordjs/voice";
 import * as ChildProcess from "child_process";
 import * as Util from "util";
 import { default as YTPL } from "ytpl";
-import { default as YTDL } from "ytdl-core";
+import { default as YTDL } from "@distube/ytdl-core";
 import { default as YTSR } from "alternative-ytsr";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";

@@ -1,12 +1,9 @@
 {
   "name": "vibin",
-  "version": "1.4.13",
+  "version": "1.4.14",
   "description": "Discord music bot",
   "main": "dist/bot.js",
   "type": "module",
-  "scripts": {
-    "start": "npx tsc && node ."
-  },
   "author": "Brandon Doornbos",
   "license": "GPL-3.0",
   "dependencies": {

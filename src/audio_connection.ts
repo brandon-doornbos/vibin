@@ -2,9 +2,9 @@ import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
 import * as ChildProcess from "child_process";
 import * as Util from "util";
-import { default as YTPL } from "ytpl";
+import { default as YTPL } from "@distube/ytpl";
 import { default as YTDL } from "@distube/ytdl-core";
-import { default as YTSR } from "alternative-ytsr";
+import { default as YTSR } from "@distube/ytsr";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
 import { shuffle, seconds_to_hms, hms_to_seconds, string_to_index } from "./utils.js";
@@ -289,13 +289,13 @@ export class AudioConnection {
                 const playlist = await YTPL(url, { limit: Infinity });
                 let duration = 0;
                 for (const item of playlist.items) {
-                    const track = new Track(item.shortUrl, item.title, item.durationSec || 0);
+                    const track = new Track(item.id, item.title, hms_to_seconds(item.duration || "0"));
                     this.enqueue(track);
-                    duration += item.durationSec || 0;
+                    duration += hms_to_seconds(item.duration || "0");
                 }
 
                 embed.setColor("Green");
-                embed.setThumbnail(playlist.thumbnails[0].url || "");
+                embed.setThumbnail(playlist.items[0].thumbnail || "");
                 embed.addFields([
                     { name: "Added playlist", value: `[${playlist.title}](${playlist.url})` },
                     { name: "Length", value: seconds_to_hms(duration) },
@@ -315,15 +315,13 @@ export class AudioConnection {
                 ]);
             } else {
                 const searchTerm = args.join(" ");
-                const filters = await YTSR.getFilters(searchTerm);
-                const filter = filters.get("Type")?.get("Video");
-                const results = await YTSR(filter?.url || "", { limit: 1 });
+                const results = await YTSR(searchTerm, { limit: 1, gl: "NL" });
                 const firstResult = results.items[0];
                 if (firstResult.type !== "video")
                     return;
                 const info = await YTDL.getInfo(firstResult.url);
                 const video = info.videoDetails;
-                const track = new Track(firstResult.url, firstResult.title, parseInt(video.lengthSeconds));
+                const track = new Track(firstResult.url, firstResult.name, parseInt(video.lengthSeconds));
                 this.enqueue(track);
 
                 embed.setColor("Green");

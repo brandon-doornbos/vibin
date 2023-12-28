@@ -221,7 +221,7 @@ export class GuildConnection {
         embeds[0].setColor("Blue");
         embeds[0].setTitle("Lyrics");
 
-        const embed_threshold = 5800;
+        const embed_threshold = 4096;
         let lyric_content = lyrics.content;
         if (lyric_content.length < embed_threshold) {
             embeds[0].setDescription(lyric_content);

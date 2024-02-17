@@ -17,12 +17,15 @@ export class GuildConnection {
     private static config_options = {
         prefix: {
             type: "string",
+            options: undefined,
             description: "prefix to invoke commands"
         }, mix_items: {
             type: "number",
+            options: undefined,
             description: "amount of items to queue of a YouTube Mix"
         }, leave_delay: {
             type: "number",
+            options: undefined,
             description: "amount of minutes to wait before leaving if the voice channel is empty"
         }
     };
@@ -288,43 +291,54 @@ export class GuildConnection {
     }
 
     async command_config(_message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
-        const embed = new Discord.EmbedBuilder()
-            .setColor("Green");
+        const embed = new Discord.EmbedBuilder();
+        embed.setColor("Green");
 
-        for (const [option, data] of Object.entries(GuildConnection.config_options)) {
-            if (option !== args[0])
-                continue;
-
-            let value: any = args[1];
-            switch (data.type) {
-                case "string":
-                    if (value === "") continue;
-                    break;
-                case "number":
-                    value = parseInt(value);
-                    if (isNaN(value) || value === undefined) continue;
-                    break;
-                default:
-                    continue;
+        if (!args[0]) {
+            let config_options = ``;
+            for (const [option, data] of Object.entries(GuildConnection.config_options)) {
+                // @ts-ignore: This always works, because option is indexed from config_options
+                config_options += `**${option}**: *${data.type}* - ${data.description} (current: ${this.config[option]}, default: ${GuildConnection.default_config[option]}${data.options ? ", options: [" + data.options + "]" : ""})\n`;
             }
-            // @ts-ignore: This always works, because option is indexed from config_options
-            this.config[option] = value;
-            this.set_config();
-            // @ts-ignore: This always works, because option is indexed from config_options
-            embed.setDescription(`Updated ${option} to: ${this.config[option]}.`);
+            embed.setColor("Blue")
+            embed.setTitle("Configuration")
+            embed.setDescription(config_options)
+            embed.setFooter({ text: `For example: config prefix %` });
             return [embed];
         }
 
-        let config_options = ``;
-        for (const [option, data] of Object.entries(GuildConnection.config_options)) {
-            // @ts-ignore: This always works, because option is indexed from config_options
-            config_options += `**${option}**: *${data.type}* - ${data.description} (current: ${this.config[option]}, default: ${GuildConnection.default_config[option]})\n`;
+        if (!Object.keys(GuildConnection.config_options).includes(args[0])) {
+            embed.setColor("Red");
+            embed.setDescription(`Config option: *${args[0]}*, not recognized, invoke without arguments for options`);
+            return [embed];
         }
-        return [embed
-            .setColor("Blue")
-            .setTitle("Configuration")
-            .setDescription(config_options)
-            .setFooter({ text: `For example: config prefix %` })];
+
+        // @ts-ignore: This always works, because this was verified as valid in the lines above
+        const data = GuildConnection.config_options[args[0]];
+        let value: any = args[1];
+        try {
+            if (!value) throw new Error("provided config value is empty");
+            switch (data.type) {
+                case "string":
+                    if (data.options && !data.options.includes(value)) throw new Error(`provided option "${value}" not in allowed list`);
+                    break;
+                case "number":
+                    value = parseInt(value);
+                    if (isNaN(value)) throw new Error("provided config value unable to be parsed to int");
+                    break;
+            }
+        } catch (error) {
+            console.error(error);
+            embed.setColor("Red");
+            embed.setDescription(`Invalid value: *${value}*, for configuration option: *${args[0]}*. Invoke without arguments for options and proper usage`);
+            return [embed];
+        }
+
+        // @ts-ignore: This always works, because this was verified as valid
+        this.config[args[0]] = value;
+        this.set_config();
+        embed.setDescription(`Updated *${args[0]}* to: *${value}*.`);
+        return [embed];
     }
 
     async command_queue(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {

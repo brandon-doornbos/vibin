@@ -116,7 +116,7 @@ export class GuildConnection {
                 **lyrics** - Request the lyrics of a track or the currently playing one
                 **move** - Move a track from one position to another
                 **pause** - Pause music playback
-                **play** - Add a YouTube video or playlist to the queue or search for one
+                **play** - Use with a URL to, a YouTube video or playlist, a YouTube Music track or playlist or a Spotify track or playlist. Anything else will be interpreted as a search term for YouTube
                 **config** - Configure bot, invoke to see options
                 **queue** - Show the tracks in the queue
                 **seek** - Seek to a specific time in the current track, takes hh:mm:ss (hh:mm: optional)

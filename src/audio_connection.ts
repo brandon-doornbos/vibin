@@ -298,7 +298,9 @@ export class AudioConnection {
 
         try {
             const url = args[0];
-            if (url.includes("&list=RD")) {
+            if (url.includes("open.spotify.com")) {
+                await this.add_from_spotify(url, embed);
+            } else if (url.includes("&list=RD")) {
                 embed.setColor("Blue");
                 embed.setDescription("Processing YouTube Mix⏳");
 
@@ -389,6 +391,65 @@ export class AudioConnection {
             ]);
             this.guild_connection.text_channel.send({ embeds: [embed] });
         });
+    }
+
+
+    async add_from_spotify(url: string, embed: Discord.EmbedBuilder) {
+        url = url.split("?si=")[0].replace(".com/", ".com/embed/");
+
+        try {
+            const response = await fetch(url);
+            const text = await response.text();
+            const match = text.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/s);
+            if (match) {
+                const json = JSON.parse(match[1]);
+                const data = json.props.pageProps.state.data.entity;
+
+                if (data.type === "playlist") {
+                    let searches = [];
+                    for (const item of data.trackList) {
+                        let search_term = `${item.subtitle} - ${item.title}`;
+                        searches.push(YTSR(search_term, { limit: 1, gl: "NL" }));
+                    }
+
+                    let duration = 0;
+                    await Promise.all(searches).then(tracks => {
+                        for (const results of tracks) {
+                            const video = results.items[0];
+                            if (video.type !== "video") {
+                                return new Error();
+                            }
+                            const new_duration = hms_to_seconds(video.duration || "0");
+                            duration += new_duration;
+                            const track = new Track(video.id, video.name, new_duration);
+                            this.enqueue(track);
+                        }
+
+                        embed.setColor("Green");
+                        embed.setThumbnail(data.coverArt.sources[0].url || "");
+                        embed.addFields([
+                            { name: "Added Spotify playlist", value: `[${data.title}](https://open.spotify.com/playlist/${data.id})` },
+                            { name: "Length", value: seconds_to_hms(duration) },
+                            { name: "Tracks", value: tracks.length.toString() }
+                        ]);
+                    }).catch(error => {
+                        console.error(error);
+                    });
+                } else {
+                    var search_term = "";
+                    for (const artist of data.artists) {
+                        search_term += `${artist.name} & `;
+                    }
+                    search_term = search_term.slice(0, search_term.length - 2);
+                    search_term += `- ${data.title}`;
+                    await this.search_yt_and_add(search_term, embed);
+                }
+            }
+        } catch (error) {
+            console.error(error);
+            embed.setColor("Red");
+            embed.setDescription("Could not get track(s) from Spotify!");
+        }
     }
 
     skip(amount: string) {

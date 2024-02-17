@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.4.16",
+  "version": "1.5.0",
   "description": "Discord music bot",
   "main": "dist/bot.js",
   "type": "module",

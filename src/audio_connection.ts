@@ -5,6 +5,7 @@ import * as Util from "util";
 import { default as YTPL } from "@distube/ytpl";
 import { default as YTDL } from "@distube/ytdl-core";
 import { default as YTSR } from "@distube/ytsr";
+import YTMusic from "ytmusic-api";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
 import { shuffle, seconds_to_hms, hms_to_seconds, string_to_index } from "./utils.js";
@@ -34,6 +35,8 @@ export class AudioConnection {
     destroyed: boolean;
     private leave_timer: NodeJS.Timeout | undefined;
 
+    private ytmusic: YTMusic;
+
     constructor(voice_channel: Discord.VoiceChannel, guild_connection: GuildConnection) {
         this.guild_connection = guild_connection;
 
@@ -60,6 +63,9 @@ export class AudioConnection {
         this.ready_lock = false;
         this.destroyed = false;
 
+        // @ts-expect-error: I don't fucking know man
+        this.ytmusic = new YTMusic.default();
+
         Bot.the().client.on("voiceStateUpdate", (old_state) => this.voice_channel_state_update(old_state));
 
         this.voice_connection.on("stateChange", (_, new_state) => this.voice_state_change(new_state));
@@ -75,6 +81,10 @@ export class AudioConnection {
         });
 
         this.voice_connection.subscribe(this.audio_player);
+    }
+
+    async init() {
+        await this.ytmusic.initialize({ GL: "NL" });
     }
 
     async voice_channel_state_update(old_state: Discord.VoiceState) {
@@ -293,6 +303,19 @@ export class AudioConnection {
         ]);
     }
 
+    async search_ytmusic_and_add(search_term: string, embed: Discord.EmbedBuilder) {
+        const tracks = await this.ytmusic.searchSongs(search_term);
+        const track = new Track(tracks[0].videoId, tracks[0].name, tracks[0].duration || 0);
+        this.enqueue(track);
+
+        embed.setColor("Green");
+        embed.setThumbnail(tracks[0].thumbnails[0].url);
+        embed.addFields([
+            { name: "Added track", value: `[${track.title}](https://music.youtube.com/watch?v=${tracks[0].videoId})` },
+            { name: "Length", value: seconds_to_hms(track.length) }
+        ]);
+    }
+
     async play(args: string[]) {
         const embed = new Discord.EmbedBuilder();
 
@@ -335,7 +358,8 @@ export class AudioConnection {
                 ]);
             } else {
                 const search_term = args.join(" ");
-                await this.search_yt_and_add(search_term, embed);
+                // @ts-expect-error: TypeScript still cannot infer these types
+                await this[`search_${this.guild_connection.config.search_provider}_and_add`](search_term, embed);
             }
         } catch (error) {
             console.warn(error);
@@ -393,7 +417,6 @@ export class AudioConnection {
         });
     }
 
-
     async add_from_spotify(url: string, embed: Discord.EmbedBuilder) {
         url = url.split("?si=")[0].replace(".com/", ".com/embed/");
 
@@ -409,19 +432,14 @@ export class AudioConnection {
                     const searches = [];
                     for (const item of data.trackList) {
                         const search_term = `${item.subtitle} - ${item.title}`;
-                        searches.push(YTSR(search_term, { limit: 1, gl: "NL" }));
+                        searches.push(this.ytmusic.searchSongs(search_term));
                     }
 
                     let duration = 0;
                     await Promise.all(searches).then(tracks => {
-                        for (const results of tracks) {
-                            const video = results.items[0];
-                            if (video.type !== "video") {
-                                return new Error();
-                            }
-                            const new_duration = hms_to_seconds(video.duration || "0");
-                            duration += new_duration;
-                            const track = new Track(video.id, video.name, new_duration);
+                        for (const songs of tracks) {
+                            duration += songs[0].duration || 0;
+                            const track = new Track(songs[0].videoId, songs[0].name, songs[0].duration || 0);
                             this.enqueue(track);
                         }
 
@@ -442,7 +460,7 @@ export class AudioConnection {
                     }
                     search_term = search_term.slice(0, search_term.length - 2);
                     search_term += `- ${data.title}`;
-                    await this.search_yt_and_add(search_term, embed);
+                    await this.search_ytmusic_and_add(search_term, embed);
                 }
             }
         } catch (error) {

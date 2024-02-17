@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.5.5",
+  "version": "1.6.0",
   "description": "Discord music bot",
   "main": "dist/bot.js",
   "type": "module",
@@ -14,7 +14,8 @@
     "@distube/ytdl-core": "^4.13.3",
     "@distube/ytpl": "^1.2.1",
     "@distube/ytsr": "^2.0.0",
-    "sodium-native": "^4.0.9"
+    "sodium-native": "^4.0.9",
+    "ytmusic-api": "^5.2.1"
   },
   "devDependencies": {
     "eslint": "^8.56.0",

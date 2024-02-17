@@ -8,7 +8,8 @@ import { Bot } from "./bot.js";
 interface GuildConfig {
     prefix: string,
     mix_items: number,
-    leave_delay: number
+    leave_delay: number,
+    search_provider: string,
 }
 
 export class GuildConnection {
@@ -27,9 +28,13 @@ export class GuildConnection {
             type: "number",
             options: undefined,
             description: "amount of minutes to wait before leaving if the voice channel is empty"
-        }
+        }, search_provider: {
+            type: "string",
+            options: ["yt", "ytmusic"],
+            description: "service to use for search queries from the `play` command"
+        },
     };
-    private static default_config: GuildConfig = { prefix: "$", mix_items: 100, leave_delay: 5 };
+    private static default_config: GuildConfig = { prefix: "$", mix_items: 100, leave_delay: 5, search_provider: "ytmusic" };
     config: GuildConfig;
 
     private audio_connection: AudioConnection | null;
@@ -80,6 +85,7 @@ export class GuildConnection {
         }
 
         this.audio_connection = new AudioConnection(voice_channel, this);
+        await this.audio_connection.init();
     }
 
     async command_bind(message: Discord.Message): Promise<Discord.EmbedBuilder[]> {
@@ -121,7 +127,7 @@ export class GuildConnection {
                 **lyrics** - Request the lyrics of a track or the currently playing one
                 **move** - Move a track from one position to another
                 **pause** - Pause music playback
-                **play** - Use with a URL to, a YouTube video or playlist, a YouTube Music track or playlist or a Spotify track or playlist. Anything else will be interpreted as a search term for YouTube
+                **play** - Use with a URL to, a YouTube video or playlist, a YouTube Music track or playlist or a Spotify track or playlist. Anything else will be interpreted as a search term for YouTube or YouTube Music (default), depending on the configuration
                 **config** - Configure bot, invoke to see options
                 **queue** - Show the tracks in the queue
                 **seek** - Seek to a specific time in the current track, takes hh:mm:ss (hh:mm: optional)
@@ -271,13 +277,15 @@ export class GuildConnection {
     }
 
     async command_play(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
-        const voice_channel = message.member?.voice.channel;
-        if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
-            this.request_voice_connection(voice_channel);
-        } else {
-            return [new Discord.EmbedBuilder()
-                .setColor("Red")
-                .setDescription("Please join a voice channel.")];
+        if (!this.audio_connection) {
+            const voice_channel = message.member?.voice.channel;
+            if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
+                await this.request_voice_connection(voice_channel);
+            } else {
+                return [new Discord.EmbedBuilder()
+                    .setColor("Red")
+                    .setDescription("Please join a voice channel.")];
+            }
         }
 
         if (this.audio_connection) {
@@ -289,7 +297,10 @@ export class GuildConnection {
                 return [result];
         }
 
-        return [new Discord.EmbedBuilder()];
+        const embed = new Discord.EmbedBuilder();
+        embed.setColor("Red");
+        embed.setDescription("This should never happen");
+        return [embed];
     }
 
     async command_config(_message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {

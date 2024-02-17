@@ -42,7 +42,7 @@ export class GuildConnection {
     }
 
     get_config() {
-        let options = structuredClone(GuildConnection.default_config);
+        const options = structuredClone(GuildConnection.default_config);
         try {
             const saved_options = JSON.parse(FS.readFileSync(`config/${Bot.the().client.user?.id}/${this.text_channel.guildId}`, "utf8"));
             for (const [option, value] of Object.entries(saved_options)) {
@@ -54,7 +54,9 @@ export class GuildConnection {
                 };
             }
             Object.defineProperties(options, saved_options);
-        } catch (_) { };
+        } catch (error) {
+            console.error(error);
+        }
         return options;
     }
 
@@ -297,7 +299,7 @@ export class GuildConnection {
         if (!args[0]) {
             let config_options = ``;
             for (const [option, data] of Object.entries(GuildConnection.config_options)) {
-                // @ts-ignore: This always works, because option is indexed from config_options
+                // @ts-expect-error: This always works, because option is indexed from config_options
                 config_options += `**${option}**: *${data.type}* - ${data.description} (current: ${this.config[option]}, default: ${GuildConnection.default_config[option]}${data.options ? ", options: [" + data.options + "]" : ""})\n`;
             }
             embed.setColor("Blue")
@@ -313,8 +315,9 @@ export class GuildConnection {
             return [embed];
         }
 
-        // @ts-ignore: This always works, because this was verified as valid in the lines above
+        // @ts-expect-error: This always works, because this was verified as valid in the lines above
         const data = GuildConnection.config_options[args[0]];
+        // eslint-disable-next-line
         let value: any = args[1];
         try {
             if (!value) throw new Error("provided config value is empty");
@@ -334,7 +337,7 @@ export class GuildConnection {
             return [embed];
         }
 
-        // @ts-ignore: This always works, because this was verified as valid
+        // @ts-expect-error: This always works, because this was verified as valid
         this.config[args[0]] = value;
         this.set_config();
         embed.setDescription(`Updated *${args[0]}* to: *${value}*.`);
@@ -435,7 +438,7 @@ export class GuildConnection {
         });
 
         for (const emoji of emojis.keys())
-            message.react(emoji).catch((_) => { });
+            message.react(emoji).catch(error => console.error(error));
     }
 
     async command_seek(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {

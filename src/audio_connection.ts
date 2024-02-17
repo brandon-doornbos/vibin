@@ -175,7 +175,7 @@ export class AudioConnection {
             // entered playing state, started next track
             const embed = new Discord.EmbedBuilder()
                 .setColor("Blue")
-                // @ts-ignore: No TypeScript, this cannot be null
+                // @ts-expect-error: No TypeScript, this cannot be null
                 .addFields([{ name: "Now playing", value: this.now_playing_resource().metadata.title }]);
 
             if (this.now_playing_message) {
@@ -214,7 +214,7 @@ export class AudioConnection {
             });
 
             for (const emoji of emojis.keys())
-                message.react(emoji).catch((_) => { });
+                message.react(emoji).catch(error => console.error(error));
         }
     }
 
@@ -406,9 +406,9 @@ export class AudioConnection {
                 const data = json.props.pageProps.state.data.entity;
 
                 if (data.type === "playlist") {
-                    let searches = [];
+                    const searches = [];
                     for (const item of data.trackList) {
-                        let search_term = `${item.subtitle} - ${item.title}`;
+                        const search_term = `${item.subtitle} - ${item.title}`;
                         searches.push(YTSR(search_term, { limit: 1, gl: "NL" }));
                     }
 
@@ -436,7 +436,7 @@ export class AudioConnection {
                         console.error(error);
                     });
                 } else {
-                    var search_term = "";
+                    let search_term = "";
                     for (const artist of data.artists) {
                         search_term += `${artist.name} & `;
                     }
@@ -584,7 +584,7 @@ export class AudioConnection {
     set_volume(volume: string) {
         const embed = new Discord.EmbedBuilder();
 
-        let parsed_volume = parseInt(volume);
+        const parsed_volume = parseInt(volume);
         if (isNaN(parsed_volume) || parsed_volume < 0) {
             embed.setColor("Red");
             embed.setDescription("Invalid volume, please enter a number of 0% or higher. (Above 200% at your own risk)");
@@ -651,7 +651,7 @@ export class AudioConnection {
             this.guild_connection.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
             if (retry_count < 5) {
-                // @ts-ignore: TypeScript needs to step up their static analysis, this cannot be undefined
+                // @ts-expect-error: TypeScript needs to step up their static analysis, this cannot be undefined
                 this.queue.unshift(this.current_track);
             } else {
                 retry_count = -1;

@@ -18,7 +18,7 @@ export class Track {
 
     create_audio_resource(volume = 1, timestamp = 0): Promise<DiscordVoice.AudioResource> {
         return new Promise((resolve, reject) => {
-            let args = [
+            const args = [
                 "--output", "-",
                 "--quiet",
                 "--format", "bestaudio",

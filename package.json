@@ -1,26 +1,26 @@
 {
   "name": "vibin",
-  "version": "1.5.2",
+  "version": "1.5.3",
   "description": "Discord music bot",
   "main": "dist/bot.js",
   "type": "module",
   "author": "Brandon Doornbos",
   "license": "GPL-3.0",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "discord.js": "^14.14.1",
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.1",
-    "discord.js": "^14.14.1",
-    "sodium-native": "^4.0.4",
-    "@distube/ytdl-core": "^4.13.2",
+    "@distube/ytdl-core": "^4.13.3",
     "@distube/ytpl": "^1.2.1",
-    "@distube/ytsr": "1.2.0",
-    "cheerio": "^1.0.0-rc.12"
+    "@distube/ytsr": "^2.0.0",
+    "sodium-native": "^4.0.9"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^6.11.0",
-    "@typescript-eslint/parser": "^6.11.0",
-    "eslint": "^8.53.0",
-    "typescript": "^5.2.2"
+    "eslint": "^8.56.0",
+    "typescript": "^5.3.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1"
   },
   "repository": {
     "type": "git",

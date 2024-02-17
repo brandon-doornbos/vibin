@@ -318,7 +318,7 @@ export class GuildConnection {
         let config_options = ``;
         for (const [option, data] of Object.entries(GuildConnection.config_options)) {
             // @ts-ignore: This always works, because option is indexed from config_options
-            config_options += `**${option}**: *${data.type}* - ${data.description} (currently: ${this.config[option]}, default: ${GuildConnection.default_config[option]})\n`;
+            config_options += `**${option}**: *${data.type}* - ${data.description} (current: ${this.config[option]}, default: ${GuildConnection.default_config[option]})\n`;
         }
         return [embed
             .setColor("Blue")

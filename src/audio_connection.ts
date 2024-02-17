@@ -335,7 +335,7 @@ export class AudioConnection {
                 ]);
             } else {
                 const search_term = args.join(" ");
-                this.search_yt_and_add(search_term, embed);
+                await this.search_yt_and_add(search_term, embed);
             }
         } catch (error) {
             console.warn(error);

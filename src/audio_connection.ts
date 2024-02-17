@@ -275,6 +275,24 @@ export class AudioConnection {
         return embed;
     }
 
+    async search_yt_and_add(search_term: string, embed: Discord.EmbedBuilder) {
+        const results = await YTSR(search_term, { limit: 1, gl: "NL" });
+        const firstResult = results.items[0];
+        if (firstResult.type !== "video")
+            return;
+        const info = await YTDL.getInfo(firstResult.url);
+        const video = info.videoDetails;
+        const track = new Track(firstResult.url, firstResult.name, parseInt(video.lengthSeconds));
+        this.enqueue(track);
+
+        embed.setColor("Green");
+        embed.setThumbnail(video.thumbnails[0].url);
+        embed.addFields([
+            { name: "Added track", value: `[${track.title}](${firstResult.url})` },
+            { name: "Length", value: seconds_to_hms(track.length) }
+        ]);
+    }
+
     async play(args: string[]) {
         const embed = new Discord.EmbedBuilder();
 
@@ -314,22 +332,8 @@ export class AudioConnection {
                     { name: "Length", value: seconds_to_hms(track.length) }
                 ]);
             } else {
-                const searchTerm = args.join(" ");
-                const results = await YTSR(searchTerm, { limit: 1, gl: "NL" });
-                const firstResult = results.items[0];
-                if (firstResult.type !== "video")
-                    return;
-                const info = await YTDL.getInfo(firstResult.url);
-                const video = info.videoDetails;
-                const track = new Track(firstResult.url, firstResult.name, parseInt(video.lengthSeconds));
-                this.enqueue(track);
-
-                embed.setColor("Green");
-                embed.setThumbnail(video.thumbnails[0].url);
-                embed.addFields([
-                    { name: "Added track", value: `[${track.title}](${firstResult.url})` },
-                    { name: "Length", value: seconds_to_hms(track.length) }
-                ]);
+                const search_term = args.join(" ");
+                this.search_yt_and_add(search_term, embed);
             }
         } catch (error) {
             console.warn(error);

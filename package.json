@@ -1,7 +1,7 @@
 {
   "name": "vibin",
-  "version": "1.6.1",
-  "description": "Discord music bot",
+  "version": "1.6.2",
+  "description": "Discord music bot. Works with YouTube, YouTube Music and Spotify",
   "main": "dist/bot.js",
   "type": "module",
   "author": "Brandon Doornbos",
@@ -28,9 +28,10 @@
     "url": "git+https://github.com/brandon-doornbos/vibin.git"
   },
   "keywords": [
-    "discord",
     "bot",
+    "discord",
     "music",
+    "spotify",
     "youtube"
   ],
   "bugs": {

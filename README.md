@@ -1,5 +1,5 @@
 # Vibin
-Just a simple Discord music bot, streaming from YouTube.
+Just a simple Discord music bot, able to stream from YouTube, YouTube Music and Spotify.
 
 ## Installing and Running
 **Make sure you have ffmpeg and yt-dlp installed and in your PATH**

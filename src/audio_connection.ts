@@ -88,8 +88,7 @@ export class AudioConnection {
     }
 
     async voice_channel_state_update(old_state: Discord.VoiceState) {
-        if (Bot.the().client.user?.id === old_state.member?.user.id)
-            return;
+        clearTimeout(this.leave_timer);
 
         if (old_state.channel?.members.size === 1) {
             this.leave_timer = setTimeout(() => {
@@ -99,8 +98,6 @@ export class AudioConnection {
                 this.guild_connection.text_channel.send({ embeds: [embed] });
                 this.destroy();
             }, this.guild_connection.config.leave_delay * 60 * 1000);
-        } else {
-            clearTimeout(this.leave_timer);
         }
     }
 
@@ -681,6 +678,8 @@ export class AudioConnection {
     }
 
     destroy() {
+        clearTimeout(this.leave_timer);
+
         if (this.destroyed)
             return;
 

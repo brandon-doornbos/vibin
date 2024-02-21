@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.6.6",
+  "version": "1.7.0",
   "description": "Discord music bot. Works with YouTube, YouTube Music and Spotify",
   "main": "dist/bot.js",
   "type": "module",
@@ -15,6 +15,7 @@
     "@distube/ytpl": "^1.2.1",
     "@distube/ytsr": "^2.0.0",
     "sodium-native": "^4.0.9",
+    "@spotify/web-api-ts-sdk": "^1.2.0",
     "ytmusic-api": "^5.2.1"
   },
   "devDependencies": {

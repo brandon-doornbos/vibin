@@ -1,3 +1,5 @@
 {
-    "vibin": "your token goes here"
+    "vibin": "your token goes here",
+    "spotify_client_id": "",
+    "spotify_client_secret": ""
 }

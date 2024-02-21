@@ -6,12 +6,40 @@ import { default as YTPL } from "@distube/ytpl";
 import { default as YTDL } from "@distube/ytdl-core";
 import { default as YTSR } from "@distube/ytsr";
 import YTMusic from "ytmusic-api";
+import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
 import { shuffle, seconds_to_hms, hms_to_seconds, string_to_index } from "./utils.js";
 import { GuildConnection } from "./guild_connection.js";
+import tokens from "./config.json" assert { type: "json" };
 
 const wait = Util.promisify(setTimeout);
+
+interface SpotifyEmbed {
+    title: string,
+    id: string,
+    coverArt: {
+        sources: {
+            url: string,
+        }[]
+    },
+    trackList: {
+        title: string,
+        subtitle: string,
+    }[],
+}
+
+interface SpotifyTrackList {
+    next: string | null,
+    items: {
+        track: {
+            name: string,
+            artists: {
+                name: string,
+            }[],
+        }
+    }[],
+}
 
 export class AudioConnection {
     private guild_connection: GuildConnection;
@@ -37,6 +65,8 @@ export class AudioConnection {
 
     private ytmusic: YTMusic;
     did_init: boolean;
+
+    private spotify: SpotifyApi | null;
 
     constructor(voice_channel: Discord.VoiceChannel, guild_connection: GuildConnection) {
         this.guild_connection = guild_connection;
@@ -68,6 +98,8 @@ export class AudioConnection {
         this.ytmusic = new YTMusic.default();
         this.did_init = false;
 
+        this.spotify = null;
+
         Bot.the().client.on("voiceStateUpdate", (old_state) => this.voice_channel_state_update(old_state));
 
         this.voice_connection.on("stateChange", (_, new_state) => this.voice_state_change(new_state));
@@ -90,6 +122,14 @@ export class AudioConnection {
             return;
 
         await this.ytmusic.initialize({ GL: "NL" });
+
+        if (!tokens.spotify_client_id || !tokens.spotify_client_secret) {
+            console.log("Found empty Spotify credentials, disabling playlist length >100 support");
+        } else {
+            console.log("Found Spotify credentials, trying to enable playlist length >100 support");
+            this.spotify = SpotifyApi.withClientCredentials(tokens.spotify_client_id, tokens.spotify_client_secret, []);
+        }
+
         this.did_init = true;
     }
 
@@ -434,30 +474,10 @@ export class AudioConnection {
                 const data = json.props.pageProps.state.data.entity;
 
                 if (data.type === "playlist") {
-                    const searches = [];
-                    for (const item of data.trackList) {
-                        const search_term = `${item.subtitle} - ${item.title}`;
-                        searches.push(this.ytmusic.searchSongs(search_term));
-                    }
+                    embed.setColor("Blue");
+                    embed.setDescription("Processing Spotify playlist⏳");
 
-                    let duration = 0;
-                    await Promise.all(searches).then(tracks => {
-                        for (const songs of tracks) {
-                            duration += songs[0].duration || 0;
-                            const track = new Track(songs[0].videoId, songs[0].name, songs[0].duration || 0);
-                            this.enqueue(track);
-                        }
-
-                        embed.setColor("Green");
-                        embed.setThumbnail(data.coverArt.sources[0].url || "");
-                        embed.addFields([
-                            { name: "Added Spotify playlist", value: `[${data.title}](https://open.spotify.com/playlist/${data.id})` },
-                            { name: "Length", value: seconds_to_hms(duration) },
-                            { name: "Tracks", value: tracks.length.toString() }
-                        ]);
-                    }).catch(error => {
-                        console.error(error);
-                    });
+                    this.add_spotify_playlist(data);
                 } else {
                     let search_term = "";
                     for (const artist of data.artists) {
@@ -473,6 +493,68 @@ export class AudioConnection {
             embed.setColor("Red");
             embed.setDescription("Could not get track(s) from Spotify!");
         }
+    }
+
+    async add_spotify_playlist(data: SpotifyEmbed) {
+        const searches = [];
+        for (const item of data.trackList) {
+            const search_term = `${item.subtitle} - ${item.title}`;
+            searches.push(this.ytmusic.searchSongs(search_term));
+        }
+
+        try {
+            if (this.spotify && data.trackList.length === 100) {
+                let next = data.id + "/tracks?offset=100&limit=100";
+                for (; ;) {
+                    const response: SpotifyTrackList = await this.spotify.makeRequest("GET", "playlists/" + next);
+
+                    for (const { track } of response.items) {
+                        let artists = "";
+                        for (const artist of track.artists) {
+                            artists += `${artist.name} & `;
+                        }
+                        artists = artists.slice(0, artists.length - 2);
+                        const search_term = `${artists} - ${track.name}`;
+                        searches.push(this.ytmusic.searchSongs(search_term));
+                        await wait(10);
+                    }
+
+                    if (response.next) {
+                        next = response.next.split("v1/playlists/")[1];
+                    } else {
+                        break;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Possibly incorrect Spotify API credentials:", error);
+        }
+
+        let duration = 0;
+        await Promise.allSettled(searches).then(tracks => {
+            let fullfilled = 0;
+            for (const promise of tracks) {
+                if (promise.status === "rejected")
+                    continue;
+                fullfilled += 1;
+
+                const result = promise.value[0];
+                duration += result.duration || 0;
+                this.enqueue(new Track(result.videoId, result.name, result.duration || 0));
+            }
+
+            const embed = new Discord.EmbedBuilder;
+            embed.setColor("Green");
+            embed.setThumbnail(data.coverArt.sources[0].url || "");
+            embed.addFields([
+                { name: "Added Spotify playlist", value: `[${data.title}](https://open.spotify.com/playlist/${data.id})` },
+                { name: "Length", value: seconds_to_hms(duration) },
+                { name: "Tracks", value: fullfilled.toString() }
+            ]);
+            this.guild_connection.text_channel.send({ embeds: [embed] });
+        }).catch(error => {
+            console.error(error);
+        });
     }
 
     skip(amount: string) {

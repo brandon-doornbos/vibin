@@ -421,7 +421,9 @@ export class AudioConnection {
     }
 
     async add_from_spotify(url: string, embed: Discord.EmbedBuilder) {
-        url = url.split("?si=")[0].replace(".com/", ".com/embed/");
+        url = url.split("?si=")[0];
+        if (!url.includes("/embed/"))
+            url = url.replace(".com/", ".com/embed/");
 
         try {
             const response = await fetch(url);

@@ -1,6 +1,7 @@
 import * as Discord from "discord.js";
 import { GuildConnection } from "./guild_connection.js";
 import tokens from "./config.json" assert { type: "json" };
+import package_info from "../package.json" assert { type: "json" };
 
 // eslint-disable-next-line
 enum Command {
@@ -40,6 +41,8 @@ export class Bot {
     }
 
     private constructor(token: string) {
+        console.log("Initializing Vibin v" + package_info.version);
+
         this.connections = new Map();
         this.command_cache = this.build_command_cache();
         this.command_cache.set("p", Command.Play);
@@ -67,7 +70,7 @@ export class Bot {
         if (!user)
             return;
 
-        console.log(`${user.tag} ready!`);
+        console.log(`Ready, with tag: ${user.tag}`);
         user.setPresence({ activities: [{ type: Discord.ActivityType.Listening, name: `@${user.username} help` }] });
     }
 

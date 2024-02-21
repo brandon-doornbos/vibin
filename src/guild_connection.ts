@@ -277,15 +277,13 @@ export class GuildConnection {
     }
 
     async command_play(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
-        if (!this.audio_connection) {
-            const voice_channel = message.member?.voice.channel;
-            if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
-                await this.request_voice_connection(voice_channel);
-            } else {
-                return [new Discord.EmbedBuilder()
-                    .setColor("Red")
-                    .setDescription("Please join a voice channel.")];
-            }
+        const voice_channel = message.member?.voice.channel;
+        if (voice_channel && voice_channel instanceof Discord.VoiceChannel) {
+            await this.request_voice_connection(voice_channel);
+        } else {
+            return [new Discord.EmbedBuilder()
+                .setColor("Red")
+                .setDescription("Please join a voice channel.")];
         }
 
         if (this.audio_connection) {

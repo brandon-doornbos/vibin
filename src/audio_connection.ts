@@ -36,6 +36,7 @@ export class AudioConnection {
     private leave_timer: NodeJS.Timeout | undefined;
 
     private ytmusic: YTMusic;
+    did_init: boolean;
 
     constructor(voice_channel: Discord.VoiceChannel, guild_connection: GuildConnection) {
         this.guild_connection = guild_connection;
@@ -65,6 +66,7 @@ export class AudioConnection {
 
         // @ts-expect-error: I don't fucking know man
         this.ytmusic = new YTMusic.default();
+        this.did_init = false;
 
         Bot.the().client.on("voiceStateUpdate", (old_state) => this.voice_channel_state_update(old_state));
 
@@ -84,7 +86,11 @@ export class AudioConnection {
     }
 
     async init() {
+        if (this.did_init)
+            return;
+
         await this.ytmusic.initialize({ GL: "NL" });
+        this.did_init = true;
     }
 
     async voice_channel_state_update(old_state: Discord.VoiceState) {

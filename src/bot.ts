@@ -60,7 +60,7 @@ export class Bot {
 
         this.client.once("ready", (client) => this.on_ready(client));
         this.client.on("error", (error) => console.warn(error));
-        this.client.on("messageCreate", (message) => this.on_message_create(message));
+        this.client.on("messageCreate", async (message) => this.on_message_create(message));
 
         this.client.login(token);
     }
@@ -93,7 +93,7 @@ export class Bot {
     }
 
     async on_message_create(message: Discord.Message) {
-        if (!message.guildId || !(message.channel instanceof Discord.TextChannel))
+        if (!message.guildId || !(message.channel instanceof Discord.TextChannel) || message.author.id === this.client.user?.id)
             return;
 
         let connection = this.connections.get(message.guildId);

@@ -348,7 +348,7 @@ export class AudioConnection {
 
     async search_ytmusic_and_add(search_term: string, embed: Discord.EmbedBuilder) {
         const tracks = await this.ytmusic.searchSongs(search_term);
-        const track = new Track(tracks[0].videoId, tracks[0].name, tracks[0].duration || 0);
+        const track = new Track("https://music.youtube.com/watch?v=" + tracks[0].videoId, tracks[0].name, tracks[0].duration || 0);
         this.enqueue(track);
 
         embed.setColor("Green");

@@ -392,7 +392,7 @@ export class GuildConnection {
 
         this.audio_connection.active_queue_message = message;
 
-        const emojis: Map<string, string> = new Map([
+        const emojis = new Map<string, string>([
             ["⏮", "first"],
             ["◀", "previous"],
             ["▶", "next"],

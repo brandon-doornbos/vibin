@@ -239,7 +239,7 @@ export class AudioConnection {
             const message = await this.guild_connection.text_channel.send({ embeds: [embed] });
             this.now_playing_message = message;
 
-            const emojis: Map<string, string> = new Map([
+            const emojis = new Map<string, string>([
                 ["⏯", "play_pause"],
                 ["⏩", "skip"],
             ]);

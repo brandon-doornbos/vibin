@@ -3,7 +3,6 @@ import { GuildConnection } from "./guild_connection.js";
 import tokens from "./config.json" assert { type: "json" };
 import package_info from "../package.json" assert { type: "json" };
 
-// eslint-disable-next-line
 enum Command {
     Bind,
     Clear,

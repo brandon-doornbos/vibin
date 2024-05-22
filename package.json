@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Discord music bot. Works with YouTube, YouTube Music and Spotify",
   "main": "src/bot.ts",
   "type": "module",
@@ -19,10 +19,10 @@
     "ytmusic-api": "^5.2.1"
   },
   "devDependencies": {
-    "eslint": "^8.56.0",
-    "typescript": "^5.3.3",
-    "@typescript-eslint/eslint-plugin": "^7.0.1",
-    "@typescript-eslint/parser": "^7.0.1"
+    "@eslint/js": "^9.3.0",
+    "eslint": "^9.3.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.10.0"
   },
   "repository": {
     "type": "git",

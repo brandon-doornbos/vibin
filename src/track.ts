@@ -41,7 +41,7 @@ export class Track {
             }
 
             args.push("--", this.url);
-            this.process = ChildProcess.spawn("yt-dlp", args, { stdio: [0, "pipe", 0] });
+            this.process = ChildProcess.spawn("yt-dlp", args, { stdio: ["ignore", "pipe", "ignore"] });
 
             if (!this.process.stdout) {
                 reject(new Error("No stdout"));

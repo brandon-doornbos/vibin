@@ -94,8 +94,7 @@ export class AudioConnection {
         this.ready_lock = false;
         this.destroyed = false;
 
-        // @ts-expect-error: I don't fucking know man
-        this.ytmusic = new YTMusic.default();
+        this.ytmusic = new YTMusic();
         this.did_init = false;
 
         this.spotify = null;

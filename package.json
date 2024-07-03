@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.7.7",
+  "version": "1.7.8",
   "description": "Discord music bot. Works with YouTube, YouTube Music and Spotify",
   "main": "src/bot.ts",
   "type": "module",

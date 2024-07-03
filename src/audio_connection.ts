@@ -215,11 +215,8 @@ export class AudioConnection {
                 this.now_playing_message = null;
             }
 
-            if (this.loop) {
-                this.current_track?.create_audio_resource().then((resource) => {
-                    this.audio_player.play(resource);
-                    return;
-                });
+            if (this.loop && this.current_track) {
+                this.queue.unshift(this.current_track);
             }
 
             void this.process_queue();

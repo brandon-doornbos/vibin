@@ -1,6 +1,6 @@
 {
   "name": "vibin",
-  "version": "1.7.9",
+  "version": "1.7.10",
   "description": "Discord music bot. Works with YouTube, YouTube Music and Spotify",
   "main": "src/bot.ts",
   "type": "module",
@@ -8,21 +8,20 @@
   "license": "GPL-3.0",
   "dependencies": {
     "cheerio": "^1.0.0",
-    "discord.js": "^14.19.1",
+    "discord.js": "^14.19.3",
     "@discordjs/voice": "^0.18.0",
-    "@distube/ytdl-core": "^4.16.9",
-    "@distube/ytpl": "^1.2.1",
+    "@distube/ytdl-core": "^4.16.10",
+    "@distube/ytpl": "^1.2.2",
     "@distube/ytsr": "^2.0.4",
-    "opusscript": "^0.1.1",
-    "sodium-native": "^5.0.1",
+    "@discordjs/opus": "^0.10.0",
     "@spotify/web-api-ts-sdk": "^1.2.0",
     "ytmusic-api": "^5.3.0"
   },
   "devDependencies": {
-    "eslint": "^9.25.1",
-    "@eslint/js": "^9.25.1",
+    "eslint": "^9.28.0",
+    "@eslint/js": "^9.28.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.1"
+    "typescript-eslint": "^8.33.0"
   },
   "repository": {
     "type": "git",

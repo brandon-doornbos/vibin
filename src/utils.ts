@@ -56,7 +56,7 @@ export function shuffle(array: unknown[]) {
 }
 
 export function string_to_index(s: string, queue_len: number) {
-    let num = undefined;
+    let num: undefined | number = undefined;
 
     if (s === "last")
         num = queue_len - 1;

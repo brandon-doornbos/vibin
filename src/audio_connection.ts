@@ -2,10 +2,8 @@ import * as Discord from "discord.js";
 import * as DiscordVoice from "@discordjs/voice";
 import * as ChildProcess from "child_process";
 import * as Util from "util";
-import { default as YTPL } from "@distube/ytpl";
-import { default as YTDL } from "@distube/ytdl-core";
-import { default as YTSR } from "@distube/ytsr";
-import YTMusic from "ytmusic-api";
+import { Innertube, YTNodes } from 'youtubei.js';
+import YTMusic, { SongDetailed } from "ytmusic-api";
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import { Bot } from "./bot.js";
 import { Track } from "./track.js";
@@ -63,6 +61,8 @@ export class AudioConnection {
     destroyed: boolean;
     private leave_timer: NodeJS.Timeout | undefined;
 
+    private innerTube: Innertube;
+
     private ytmusic: YTMusic;
     did_init: boolean;
 
@@ -119,6 +119,8 @@ export class AudioConnection {
     async init() {
         if (this.did_init)
             return;
+
+        this.innerTube = await Innertube.create({ location: "NL" });
 
         await this.ytmusic.initialize({ GL: "NL" });
 
@@ -224,8 +226,7 @@ export class AudioConnection {
             // entered playing state, started next track
             const embed = new Discord.EmbedBuilder()
                 .setColor("Blue")
-                // @ts-expect-error: No TypeScript, this cannot be null
-                .addFields([{ name: "Now playing", value: this.now_playing_resource().metadata.title }]);
+                .addFields([{ name: "Now playing", value: this.now_playing_resource()?.metadata.title || "---" }]);
 
             if (this.now_playing_message) {
                 this.now_playing_message.delete();
@@ -290,7 +291,7 @@ export class AudioConnection {
         const from = string_to_index(source, this.queue.length);
         const to = string_to_index(target, this.queue.length);
 
-        if (
+        if (from && to &&
             (from !== to)
             && (from >= 0 && from < this.queue.length)
             && (to >= 0 && to < this.queue.length)
@@ -298,7 +299,7 @@ export class AudioConnection {
             embed.setColor("Green");
             embed.setDescription(`Moved *${this.queue[from].title}* to location ${to + 1}`);
 
-            for (let i = from; i > to; i -= 1) {
+            for (let i: number = from; i > to; i -= 1) {
                 const temp = this.queue[i - 1];
                 this.queue[i - 1] = this.queue[i];
                 this.queue[i] = temp;
@@ -325,19 +326,20 @@ export class AudioConnection {
     }
 
     async search_yt_and_add(search_term: string, embed: Discord.EmbedBuilder) {
-        const results = await YTSR(search_term, { limit: 1, gl: "NL" });
-        const firstResult = results.items[0];
-        if (firstResult.type !== "video")
+        const result = (await this.innerTube.search(search_term, { type: "video" })).results.firstOfType(YTNodes.Video);
+        if (!result) {
             return;
-        const info = await YTDL.getInfo(firstResult.url);
-        const video = info.videoDetails;
-        const track = new Track(firstResult.url, firstResult.name, parseInt(video.lengthSeconds));
+        }
+
+        const track = new Track(result.video_id, result.title.toString(), result.duration.seconds);
         this.enqueue(track);
 
         embed.setColor("Green");
-        embed.setThumbnail(video.thumbnails[0].url);
-        embed.addFields([
-            { name: "Added track", value: `[${track.title}](${firstResult.url})` },
+        if (result.best_thumbnail) {
+            embed.setThumbnail(result.best_thumbnail.url);
+        }
+        return embed.addFields([
+            { name: "Added track", value: `[${track.title}](https://youtu.be/${result.video_id})` },
             { name: "Length", value: seconds_to_hms(track.length) }
         ]);
     }
@@ -349,7 +351,7 @@ export class AudioConnection {
 
         embed.setColor("Green");
         embed.setThumbnail(tracks[0].thumbnails[0].url);
-        embed.addFields([
+        return embed.addFields([
             { name: "Added track", value: `[${track.title}](https://music.youtube.com/watch?v=${tracks[0].videoId})` },
             { name: "Length", value: seconds_to_hms(track.length) }
         ]);
@@ -359,55 +361,74 @@ export class AudioConnection {
         const embed = new Discord.EmbedBuilder();
 
         try {
-            const url = args[0];
-            if (url.includes("open.spotify.com")) {
-                await this.add_from_spotify(url, embed);
-            } else if (url.includes("&list=RD")) {
+            if (args[0].includes("open.spotify.com")) {
+                await this.add_from_spotify(args[0], embed);
+                return embed;
+            }
+
+            const nav = await this.innerTube.resolveURL(args[0]);
+            const videoId = nav.payload.videoId;
+
+            if (nav.payload.playlistId === "RD" + videoId) {
                 embed.setColor("Blue");
                 embed.setDescription("Processing YouTube Mix⏳");
 
-                this.add_youtube_mix(url);
-            } else if (YTPL.validateID(url)) {
-                const playlist = await YTPL(url, { limit: Infinity });
-                let duration = 0;
-                for (const item of playlist.items) {
-                    const track = new Track(item.id, item.title, hms_to_seconds(item.duration || "0"));
+                this.add_youtube_mix(args[0]);
+                return embed;
+            }
+
+            if (nav.metadata.page_type === "WEB_PAGE_TYPE_PLAYLIST" || nav.payload.playlistId) {
+                const playlist = await this.innerTube.getPlaylist(nav.payload.playlistId || nav.payload.browseId);
+                if (!playlist) {
+                    throw Error("Unable to get playlist.");
+                }
+
+                let count = 0, duration = 0;
+                for (const item of playlist.items.filterType(YTNodes.PlaylistVideo)) {
+                    const track = new Track(item.id, item.title.toString(), item.duration.seconds);
                     this.enqueue(track);
-                    duration += hms_to_seconds(item.duration || "0");
+                    ++count;
+                    duration += track.length;
                 }
 
                 embed.setColor("Green");
-                embed.setThumbnail(playlist.items[0].thumbnail || "");
+                const thumbnail = playlist.items.firstOfType(YTNodes.PlaylistVideo)?.thumbnails[0]?.url;
+                if (thumbnail) {
+                    embed.setThumbnail(thumbnail);
+                }
                 embed.addFields([
-                    { name: "Added playlist", value: `[${playlist.title}](${playlist.url})` },
+                    { name: "Added playlist", value: `[${playlist.info.title?.toString()}](${args[0]})` },
                     { name: "Length", value: seconds_to_hms(duration) },
-                    { name: "Tracks", value: playlist.items.length.toString() }
+                    { name: "Tracks", value: count.toString() }
                 ]);
-            } else if (YTDL.validateURL(url)) {
-                const info = await YTDL.getInfo(url);
-                const video = info.videoDetails;
-                const track = new Track(url, video.title, parseInt(video.lengthSeconds));
+
+                return embed;
+            }
+
+            if (videoId) {
+                const info = (await this.innerTube.getBasicInfo(videoId)).basic_info;
+                const track = new Track(videoId, info.title || "", info.duration || 0);
                 this.enqueue(track);
 
                 embed.setColor("Green");
-                embed.setThumbnail(video.thumbnails[0].url);
+                if (info.thumbnail) {
+                    embed.setThumbnail(info.thumbnail[0].url);
+                }
                 embed.addFields([
-                    { name: "Added track", value: `[${track.title}](${url})` },
+                    { name: "Added track", value: `[${track.title}](https://youtu.be/${videoId})` },
                     { name: "Length", value: seconds_to_hms(track.length) }
                 ]);
-            } else {
-                const search_term = args.join(" ");
-                // @ts-expect-error: TypeScript still cannot infer these types
-                await this[`search_${this.guild_connection.config.search_provider}_and_add`](search_term, embed);
+                return embed;
             }
+
+            const search_term = args.join(" ");
+            return await this[`search_${this.guild_connection.config.search_provider}_and_add`](search_term, embed);
         } catch (error) {
             console.warn(error);
-            return new Discord.EmbedBuilder()
+            return embed
                 .setColor("Red")
                 .setDescription("Failed to play track.");
         }
-
-        return embed;
     }
 
     async add_youtube_mix(url: string) {
@@ -418,7 +439,6 @@ export class AudioConnection {
             "--playlist-items", `1:${this.guild_connection.config.mix_items}`,
             "--no-check-certificates",
             "--no-cache-dir",
-            "--no-call-home",
             url,
         ], (error, stdout) => {
             const embed = new Discord.EmbedBuilder();
@@ -489,10 +509,12 @@ export class AudioConnection {
             embed.setColor("Red");
             embed.setDescription("Could not get track(s) from Spotify!");
         }
+
+        return embed;
     }
 
     async add_spotify_playlist(data: SpotifyEmbed) {
-        const searches = [];
+        const searches: Promise<SongDetailed[]>[] = [];
         for (const item of data.trackList) {
             const search_term = `${item.subtitle} - ${item.title}`;
             searches.push(this.ytmusic.searchSongs(search_term));
@@ -582,7 +604,7 @@ export class AudioConnection {
         const embed = new Discord.EmbedBuilder();
         const idx = string_to_index(index, this.queue.length);
 
-        if (idx >= 0 && idx < this.queue.length) {
+        if (idx && idx >= 0 && idx < this.queue.length) {
             embed.setColor("Green");
             embed.addFields([{ name: "Removed track", value: this.queue[idx].title }]);
 
@@ -652,7 +674,7 @@ export class AudioConnection {
 
         const tracksPerPage = 10;
         const pages = parseInt(Math.ceil(this.queue.length / 10).toFixed(0));
-        let page_num = string_to_index(page, pages);
+        let page_num = string_to_index(page, pages) || 0;
 
         if (page_num >= pages)
             page_num = pages - 1;
@@ -733,8 +755,9 @@ export class AudioConnection {
     }
 
     get_audio_resource(retry_count: number, timestamp = 0) {
-        if (!this.current_track)
+        if (!this.current_track) {
             return;
+        }
 
         this.current_track.destroy();
 
@@ -751,8 +774,7 @@ export class AudioConnection {
                 .addFields([{ name: "Error", value: error.message }]);
             this.guild_connection.text_channel.send({ embeds: [embed] }).then((handle) => setTimeout(() => handle.delete(), 30000));
 
-            if (retry_count < 5) {
-                // @ts-expect-error: TypeScript needs to step up their static analysis, this cannot be undefined
+            if (retry_count < 5 && this.current_track) {
                 this.queue.unshift(this.current_track);
             } else {
                 retry_count = -1;

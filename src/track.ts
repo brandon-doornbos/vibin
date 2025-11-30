@@ -27,7 +27,6 @@ export class Track {
                 "--extractor-args", "youtube:skip=dash",
                 "--rate-limit", "100K",
                 "--no-cache-dir",
-                "--no-call-home",
                 "--downloader", "ffmpeg",
                 "--downloader-args", "ffmpeg_i:-reconnect 1",
             ];

@@ -34,7 +34,7 @@ export class GuildConnection {
             description: "service to use for search queries from the `play` command"
         },
     };
-    private static default_config: GuildConfig = { prefix: "$", mix_items: 100, leave_delay: 5, search_provider: "ytmusic" };
+    private static default_config: GuildConfig = { prefix: "$", mix_items: 100, leave_delay: 5, search_provider: "yt" };
     config: GuildConfig;
 
     private audio_connection: AudioConnection | null;
@@ -204,7 +204,7 @@ export class GuildConnection {
     async command_lyrics(message: Discord.Message, args: string[]): Promise<Discord.EmbedBuilder[]> {
         const embeds = [new Discord.EmbedBuilder()];
 
-        let title;
+        let title: string;
         if (args.length > 0) {
             title = args.join(" ");
         } else if (this.audio_connection) {
@@ -308,7 +308,6 @@ export class GuildConnection {
         if (!args[0]) {
             let config_options = ``;
             for (const [option, data] of Object.entries(GuildConnection.config_options)) {
-                // @ts-expect-error: This always works, because option is indexed from config_options
                 config_options += `**${option}**: *${data.type}* - ${data.description} (current: ${this.config[option]}, default: ${GuildConnection.default_config[option]}${data.options ? ", options: [" + data.options + "]" : ""})\n`;
             }
             embed.setColor("Blue")
@@ -324,7 +323,6 @@ export class GuildConnection {
             return [embed];
         }
 
-        // @ts-expect-error: This always works, because this was verified as valid in the lines above
         const data = GuildConnection.config_options[args[0]];
         // eslint-disable-next-line
         let value: any = args[1];
@@ -346,7 +344,6 @@ export class GuildConnection {
             return [embed];
         }
 
-        // @ts-expect-error: This always works, because this was verified as valid
         this.config[args[0]] = value;
         this.set_config();
         embed.setDescription(`Updated *${args[0]}* to: *${value}*.`);
@@ -415,14 +412,14 @@ export class GuildConnection {
                 return;
 
             const footer = message.embeds[0].footer?.text.split(" ");
-            let page, pages;
+            let page = 1, pages = 1;
             if (footer) {
                 page = parseInt(footer[1]);
                 pages = parseInt(footer[3]);
             }
 
-            const edit = async (page: string) => {
-                const embed = (await this.command_queue(message, [page]))[0];
+            const edit = async (page: number) => {
+                const embed = (await this.command_queue(message, [page.toString()]))[0];
 
                 if (!embed.data.description) {
                     embed.setColor("Red");
@@ -433,16 +430,16 @@ export class GuildConnection {
             }
 
             switch (emojis.get(reaction.emoji.name)) {
-                case "first": edit("1"); break;
-                case "previous": edit(page ? (page - 1).toString() : "1"); break;
-                case "next": edit(page ? (page + 1).toString() : "1"); break;
-                case "last": edit(pages ? pages.toString() : "1"); break;
+                case "first": edit(1); break;
+                case "previous": edit(page - 1); break;
+                case "next": edit(page + 1); break;
+                case "last": edit(pages); break;
                 case "shuffle":
                     if (this.audio_connection)
                         this.audio_connection.shuffle();
-                    edit(page ? page.toString() : "1");
+                    edit(page);
                     break;
-                case "refresh": edit(page ? page.toString() : "1"); break;
+                case "refresh": edit(page); break;
             }
         });
 

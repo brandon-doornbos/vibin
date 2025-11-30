@@ -61,7 +61,7 @@ export class AudioConnection {
     destroyed: boolean;
     private leave_timer: NodeJS.Timeout | undefined;
 
-    private innerTube: Innertube;
+    private innertube: Innertube;
 
     private ytmusic: YTMusic;
     did_init: boolean;
@@ -120,7 +120,7 @@ export class AudioConnection {
         if (this.did_init)
             return;
 
-        this.innerTube = await Innertube.create({ location: "NL" });
+        this.innertube = await Innertube.create({ location: "NL" });
 
         await this.ytmusic.initialize({ GL: "NL" });
 
@@ -326,7 +326,7 @@ export class AudioConnection {
     }
 
     async search_yt_and_add(search_term: string, embed: Discord.EmbedBuilder) {
-        const result = (await this.innerTube.search(search_term, { type: "video" })).results.firstOfType(YTNodes.Video);
+        const result = (await this.innertube.search(search_term, { type: "video" })).results.firstOfType(YTNodes.Video);
         if (!result) {
             return;
         }
@@ -366,7 +366,7 @@ export class AudioConnection {
                 return embed;
             }
 
-            const nav = await this.innerTube.resolveURL(args[0]);
+            const nav = await this.innertube.resolveURL(args[0]);
             const videoId = nav.payload.videoId;
 
             if (nav.payload.playlistId === "RD" + videoId) {
@@ -378,7 +378,7 @@ export class AudioConnection {
             }
 
             if (nav.metadata.page_type === "WEB_PAGE_TYPE_PLAYLIST" || nav.payload.playlistId) {
-                const playlist = await this.innerTube.getPlaylist(nav.payload.playlistId || nav.payload.browseId);
+                const playlist = await this.innertube.getPlaylist(nav.payload.playlistId || nav.payload.browseId);
                 if (!playlist) {
                     throw Error("Unable to get playlist.");
                 }
@@ -406,7 +406,7 @@ export class AudioConnection {
             }
 
             if (videoId) {
-                const info = (await this.innerTube.getBasicInfo(videoId)).basic_info;
+                const info = (await this.innertube.getBasicInfo(videoId)).basic_info;
                 const track = new Track(videoId, info.title || "", info.duration || 0);
                 this.enqueue(track);
 
